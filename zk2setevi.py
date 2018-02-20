@@ -5,21 +5,6 @@ import markdown as md
 import json
 
 
-# 1. search for all notes, collect their IDs and titles.
-# 2. enumerate notes for json id
-# 3. for each note
-#    if link in line:
-#        create new relationship from from to to
-#        close current chunk
-#        append current chunk to chunks
-#        make new chunk with note id and title
-#
-#    else:
-#        add line to current chunk
-
-# add #tags and notes as entrypoints (later: citekeys / citations)
-
-
 class Zk2Setevi:
     def __init__(self, home=None, folder=None, extension='.md', linkstyle='double'):
         if home is None:
@@ -287,7 +272,6 @@ class Zk2Setevi:
         return root_id
 
     def create_json(self):
-
         root_id = self.create_all_nodes()
         json_dict = {
             'listOfAllDataNodes': self.json_nodes,
@@ -299,6 +283,8 @@ class Zk2Setevi:
         return json_s
 
     def create_html(self):
+        self.find_all_notes_all_tags()
+        self.enumerate_items()
         json_s = self.create_json()
         with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
@@ -321,7 +307,5 @@ if __name__ == '__main__':
     print(home)
 
     z = Zk2Setevi(home=home, folder=zk_folder)
-    z.find_all_notes_all_tags()
-    z.enumerate_items()
     z.create_html()
 
