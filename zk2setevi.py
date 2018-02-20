@@ -136,8 +136,8 @@ class Zk2Setevi:
         """
         for noteid in sorted(self.note_titles.keys()):
             self.json_note_ids[noteid] = self.next_id()
-        #for tag in sorted(self.tag_notes.keys()):
-        #    self.json_tag_ids[tag] = self.next_id()
+        for tag in sorted(self.tag_notes.keys()):
+            self.json_tag_ids[tag] = self.next_id()
 
     def create_nodes_from_note(self, noteid):
         filn = self.note_file_by_id(note_id=noteid)
@@ -224,7 +224,31 @@ class Zk2Setevi:
         return node_id
 
     def create_all_tags_node(self):
-        pass
+        # also create all tag notes
+        node_id = self.next_id()
+        rel_ids = []
+        for tag in sorted(self.tag_notes.keys()):
+            note_ids = self.tag_notes[tag]
+            tag_node = self.json_tag_ids[tag]
+            tag_rel_ids = []
+            for note_id in note_ids:
+                rel_id = self.create_relationship_node(tag_node, self.json_note_ids[note_id])
+                tag_rel_ids.append(rel_id)
+            self.json_nodes.append({
+                'dataNodeId': tag_node,
+                'name': tag,
+                'classAttr': 'SimpleDataNode',
+                'relationships': tag_rel_ids
+            })
+            rel_id = self.create_relationship_node(node_id, tag_node)
+            rel_ids.append(rel_id)
+        self.json_nodes.append({
+            'dataNodeId': node_id,
+            'name': '#tags',
+            'classAttr': 'SimpleDataNode',
+            'relationships': rel_ids
+        })
+        return node_id
 
     def create_all_notes_node(self):
         json_note_ids = sorted(list(self.json_note_ids.keys()))
@@ -242,9 +266,11 @@ class Zk2Setevi:
         return node_id
 
     def create_root_node(self):
-        sub_id = self.create_all_notes_node()
+        n_id = self.create_all_notes_node()
+        t_id = self.create_all_tags_node()
         root_id = self.next_id()
-        rel_ids = [self.create_relationship_node(root_id, sub_id)]
+        rel_ids = [self.create_relationship_node(root_id, t_id),
+                   self.create_relationship_node(root_id, n_id)]
         self.json_nodes.append({
             'dataNodeId': root_id,
             'name': 'Zettelkasten',
@@ -256,8 +282,6 @@ class Zk2Setevi:
     def create_all_nodes(self):
         for note_id in sorted(self.note_titles.keys()):
             self.create_nodes_from_note(note_id)
-
-        # TODO: tag nodes
 
         root_id = self.create_root_node()
         return root_id
