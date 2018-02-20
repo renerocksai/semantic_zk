@@ -1,4 +1,5 @@
 from zkutils import *
+from bibstuff import Autobib
 import os
 from collections import defaultdict
 import markdown as md
@@ -6,7 +7,7 @@ import json
 
 
 class Zk2Setevi:
-    def __init__(self, home=None, folder=None, extension='.md', linkstyle='double'):
+    def __init__(self, home=None, folder=None, bibfile=None, extension='.md', linkstyle='double'):
         if home is None:
             raise RuntimeError('no home')
         if folder is None:
@@ -27,11 +28,18 @@ class Zk2Setevi:
         else:
             self.link_prefix = '§'
             self.link_postfix = ''
+
+        self.bibfile = bibfile
+        if bibfile is None:
+            # try to find it in the ZK foldder
+            self.bibfile = Autobib.look_for_bibfile(self.folder)
+        self.bib_citekeys = []
         self.note_tags = {}
         self.tag_notes = defaultdict(set)
         self.note_titles = {}
         self.json_note_ids = {}
         self.json_tag_ids = {}
+        self.json_citekey_ids = {}
         self.json_id_counter = -1
         self.json_nodes = []
 
@@ -67,6 +75,33 @@ class Zk2Setevi:
                 self.note_tags[note_id] = tags
                 for tag in tags:
                     self.tag_notes[tag].add(note_id)
+
+    def load_bibfile(self):
+        if self.bibfile is None:
+            return
+        self.bib_citekeys = Autobib.extract_all_entries(self.bibfile)
+
+    def lazy_gen_citation(self, citekey):
+        ck_text = '<div style="color: gray"><i>(' + citekey + ')</i></div>'
+        if self.bibfile is None:
+            if citekey not in self.json_citekey_ids:
+                node_id = self.create_text_node(ck_text)
+                self.json_citekey_ids[citekey] = node_id
+        else:
+            if citekey not in self.json_citekey_ids:
+                d = Autobib.create_bibliography(citekey, self.bibfile, p_citekeys=self.bib_citekeys)
+                bib_node_id = self.create_text_node(md.markdown(d[citekey]))
+                # now create linked node to bib
+                ck_node_id = self.next_id()
+                rel_id = self.create_relationship_node(ck_node_id, bib_node_id)
+                self.json_nodes.append({
+                    'dataNodeId': ck_node_id,
+                    'name': ck_text,
+                    'classAttr': 'SimpleDataNode',
+                    'relationships': [rel_id]
+                })
+                self.json_citekey_ids[citekey] = ck_node_id
+        return self.json_citekey_ids[citekey]
 
     @staticmethod
     def cut_after_note_id(text):
@@ -208,6 +243,20 @@ class Zk2Setevi:
                 # append a separator
                 para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
+            citekeys = Autobib.find_citations(para, self.bib_citekeys)
+            if citekeys:
+                # append a separator
+                # para_id = self.create_text_node(' &nbsp; &nbsp;')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Cited:</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
+            for citekey in citekeys:
+                ck_node_id = self.lazy_gen_citation(citekey)
+                rel_id = self.create_relationship_node(node_id, ck_node_id)
+                rel_ids.append(rel_id)
+            if citekeys:
+                # append a separator
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         # embed the chunks into a note node
         self.json_nodes.append({
@@ -341,5 +390,6 @@ if __name__ == '__main__':
     print(home)
 
     z = Zk2Setevi(home=home, folder=zk_folder)
+    z.load_bibfile()
     z.create_html()
 
