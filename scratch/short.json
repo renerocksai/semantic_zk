@@ -1,0 +1,26 @@
+
+{
+    "listOfAllDataNodes": [
+        {
+            "classAttr": "HasDetail",
+            "from": 0,
+            "to": 2,
+            "dataNodeId": 1
+        },
+        {
+            "relationships": [
+                1
+            ],
+            "name": "Father",
+            "classAttr": "SimpleDataNode",
+            "dataNodeId": 0
+        },
+        {
+            "relationships": [],
+            "name": "Child",
+            "classAttr": "SimpleDataNode",
+            "dataNodeId": 2
+        }
+    ],
+    "rootNode": 0
+}
