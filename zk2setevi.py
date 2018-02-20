@@ -79,7 +79,7 @@ class Zk2Setevi:
     def load_bibfile(self):
         if self.bibfile is None:
             return
-        self.bib_citekeys = Autobib.extract_all_entries(self.bibfile)
+        self.bib_citekeys = list(Autobib.extract_all_entries(self.bibfile).keys())
 
     def lazy_gen_citation(self, citekey):
         ck_text = '<div style="color: gray"><i>(' + citekey + ')</i></div>'
@@ -89,7 +89,7 @@ class Zk2Setevi:
                 self.json_citekey_ids[citekey] = node_id
         else:
             if citekey not in self.json_citekey_ids:
-                d = Autobib.create_bibliography(citekey, self.bibfile, p_citekeys=self.bib_citekeys)
+                d = Autobib.create_bibliography('@' + citekey, self.bibfile, p_citekeys=self.bib_citekeys)
                 bib_node_id = self.create_text_node(md.markdown(d[citekey]))
                 # now create linked node to bib
                 ck_node_id = self.next_id()

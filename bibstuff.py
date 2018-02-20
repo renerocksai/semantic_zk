@@ -126,9 +126,10 @@ class Autobib:
         """
         Find all mentioned citekeys in text
         """
-        citekeys = [re.escape(citekey) for citekey in citekeys]
-        founds = re.findall('|'.join(list(citekeys)), text)
-        founds = set(founds)
+        citekeys_re = [re.escape('@' + citekey) for citekey in citekeys]
+        citekeys_re.extend([re.escape('#' + citekey) for citekey in citekeys])
+        founds = re.findall('|'.join(list(citekeys_re)), text)
+        founds = set([found_citekey[1:] for found_citekey in founds])
         return founds
 
     @staticmethod
