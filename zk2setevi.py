@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf8 -*-
+
 from zkutils import *
 import os
 from collections import defaultdict
