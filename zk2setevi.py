@@ -159,58 +159,6 @@ class Zk2Setevi:
         for tag in sorted(self.tag_notes.keys()):
             self.json_tag_ids[tag] = self.next_id()
 
-    def create_nodes_from_note_old(self, noteid):
-        """
-        Note links in place
-        """
-        filn = self.note_file_by_id(note_id=noteid)
-        if not filn:
-            return None
-        node_id = self.json_note_ids[noteid]
-
-        filn = os.path.join(self.folder, filn)
-        with open(filn, mode='r', encoding='utf-8', errors='ignore') as f:
-            lines = f.readlines()
-        chunk_rel_ids = []
-        current_chunk = ''
-        for line in lines:
-            has_links = ZkConstants.Link_Matcher.search(line)
-            if not has_links:
-                current_chunk += line + '\n'
-            else:
-                # split line into chunks
-                # terminate current chunk with text before link
-                note_id_expected = False
-                for item in ZkConstants.Link_Matcher.split(line):
-                    if item is None:
-                        continue
-                    if item.startswith('[') or item.startswith('§'):
-                        note_id_expected = True
-                        continue
-                    if item.startswith(']'):
-                        continue
-                    if note_id_expected:
-                        # finalize current chunk
-                        chunk_id = self.create_text_node(current_chunk)
-                        chunk_rel_ids.append(self.create_relationship_node(node_id, chunk_id))
-                        note_id_expected = False
-                        current_chunk = ''
-                        # now process link
-                        rel_id = self.create_note_link_node(item, chunk_id)
-                        chunk_rel_ids.append(rel_id)
-                    else:
-                        current_chunk += item
-        if current_chunk:
-            chunk_id = self.create_text_node(current_chunk)
-            chunk_rel_ids.append(self.create_relationship_node(node_id, chunk_id))
-        # embed the chunks into a note node
-        self.json_nodes.append({
-            'dataNodeId': node_id,
-            'name': self.note_titles[noteid],
-            'classAttr': 'SimpleDataNode',
-            'relationships': chunk_rel_ids
-        })
-
     def create_nodes_from_note(self, noteid):
         """
         Note links after paragraph
