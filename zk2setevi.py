@@ -22,8 +22,8 @@ class Zk2Setevi:
             self.link_prefix = '[['
             self.link_postfix = ']]'
         elif linkstyle == 'single':
-            self.link_prefix = '[['
-            self.link_postfix = ']]'
+            self.link_prefix = '['
+            self.link_postfix = ']'
         else:
             self.link_prefix = '§'
             self.link_postfix = ''
