@@ -334,7 +334,7 @@ class Zk2Setevi:
 
         with open(os.path.join(self.home, 'output', 'out.html'), mode='w', encoding='utf-8') as f:
             for line in output_lines:
-                f.write(line + '\n')
+                f.write(line)
 
 
 if __name__ == '__main__':
