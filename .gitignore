@@ -1,5 +1,6 @@
 .idea
 output/out.json
+.sublime-w*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
