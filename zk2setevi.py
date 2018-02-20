@@ -124,7 +124,10 @@ class Zk2Setevi:
         for tag in sorted(self.tag_notes.keys()):
             self.json_tag_ids[tag] = self.next_id()
 
-    def create_nodes_from_note(self, noteid):
+    def create_nodes_from_note_old(self, noteid):
+        """
+        Note links in place
+        """
         filn = self.note_file_by_id(note_id=noteid)
         if not filn:
             return None
@@ -158,7 +161,7 @@ class Zk2Setevi:
                         note_id_expected = False
                         current_chunk = ''
                         # now process link
-                        rel_id, chunk_id = self.create_note_link_node(item)
+                        rel_id = self.create_note_link_node(item, chunk_id)
                         chunk_rel_ids.append(rel_id)
                     else:
                         current_chunk += item
@@ -173,6 +176,47 @@ class Zk2Setevi:
             'relationships': chunk_rel_ids
         })
 
+    def create_nodes_from_note(self, noteid):
+        """
+        Note links after paragraph
+        """
+        filn = self.note_file_by_id(note_id=noteid)
+        if not filn:
+            return None
+        node_id = self.json_note_ids[noteid]
+
+        filn = os.path.join(self.folder, filn)
+        with open(filn, mode='r', encoding='utf-8', errors='ignore') as f:
+            paras = f.read().split('\n\n')
+
+        rel_ids = []
+        for para in paras:
+            para_rel_ids = []
+            linked_note_ids = ZkConstants.Link_Matcher.findall(para)
+            linked_note_ids = [l[1] for l in linked_note_ids]
+            para_id = self.create_text_node(para)
+            rel_ids.append(self.create_relationship_node(node_id, para_id))
+            if linked_note_ids:
+                # append a separator
+                # para_id = self.create_text_node(' &nbsp; &nbsp;')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
+            for note_id in [self.cut_after_note_id(x) for x in linked_note_ids]:
+                rel_id = self.create_note_link_node(note_id, para_id)
+                rel_ids.append(rel_id)
+            if linked_note_ids:
+                # append a separator
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
+
+        # embed the chunks into a note node
+        self.json_nodes.append({
+            'dataNodeId': node_id,
+            'name': '<div style="color: blue">[' + self.note_titles[noteid] + ']</div>',
+            'classAttr': 'SimpleDataNode',
+            'relationships': rel_ids
+        })
+
     def create_text_node(self, text):
         node_id = self.next_id()
         self.json_nodes.append({
@@ -183,20 +227,10 @@ class Zk2Setevi:
         })
         return node_id
 
-    def create_note_link_node(self, to_noteid):
-        node_id = self.next_id()
+    def create_note_link_node(self, to_noteid, from_nodeid):
         to_id = self.json_note_ids[to_noteid]
-        rel_id = self.create_relationship_node(node_id, to_id)
-        link_text = '{}{}{} {}'.format(self.link_prefix, to_noteid,
-                                       self.link_postfix,
-                                       self.note_titles[to_noteid])
-        self.json_nodes.append({
-            'dataNodeId': node_id,
-            'name': link_text,
-            'classAttr': 'SimpleDataNode',
-            'relationships': [rel_id]
-        })
-        return rel_id, node_id
+        rel_id = self.create_relationship_node(from_nodeid, to_id)
+        return rel_id
 
     def create_relationship_node(self, from_id, to_id):
         node_id = self.next_id()
@@ -221,7 +255,7 @@ class Zk2Setevi:
                 tag_rel_ids.append(rel_id)
             self.json_nodes.append({
                 'dataNodeId': tag_node,
-                'name': tag,
+                'name': '<div style="color: purple">' + tag + '</div>',
                 'classAttr': 'SimpleDataNode',
                 'relationships': tag_rel_ids
             })
@@ -240,7 +274,7 @@ class Zk2Setevi:
         node_id = self.next_id()
         rel_node_ids = []
         for note_id in json_note_ids:
-            rel_id, _ = self.create_note_link_node(note_id)
+            rel_id = self.create_note_link_node(note_id, node_id)
             rel_node_ids.append(rel_id)
         self.json_nodes.append({
             'dataNodeId': node_id,
