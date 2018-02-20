@@ -37,6 +37,7 @@ class Zk2Setevi:
         self.note_tags = {}
         self.tag_notes = defaultdict(set)
         self.note_titles = {}
+        self.citing_notes = defaultdict(set)
         self.json_note_ids = {}
         self.json_tag_ids = {}
         self.json_citekey_ids = {}
@@ -69,12 +70,15 @@ class Zk2Setevi:
             _, title = filn.split(' ', 1)
             title = title.replace(self.extension, '')
             self.note_titles[note_id] = title
-            tags = list(self.extract_tags(filn))
+            tags, citekeys = self.extract_tags_and_citekeys(filn)
 
             if tags:
                 self.note_tags[note_id] = tags
                 for tag in tags:
                     self.tag_notes[tag].add(note_id)
+
+            for citekey in citekeys:
+                self.citing_notes[citekey].add(note_id)
 
     def load_bibfile(self):
         if self.bibfile is None:
@@ -135,7 +139,7 @@ class Zk2Setevi:
         if len(candidates) > 0:
             return candidates[0]
 
-    def extract_tags(self, file):
+    def extract_tags_and_citekeys(self, file):
         """
         Extract #tags from file.
         Returns all words starting with `#`.
@@ -144,11 +148,13 @@ class Zk2Setevi:
         tags = set()
         full_p = os.path.join(self.folder, file)
         with open(full_p, mode='r', encoding='utf-8') as f:
-            for line in f:
+            text = f.read()
+            for line in text.split('\n'):
                 line = line.strip()
                 for tag in re.findall(ZkConstants.RE_TAGS_PY, line):
                     tags.add(tag[0])
-        return tags
+        citekeys = Autobib.find_citations(text, self.bib_citekeys)
+        return tags, citekeys
 
     def enumerate_items(self):
         """
@@ -173,6 +179,20 @@ class Zk2Setevi:
             paras = f.read().split('\n\n')
 
         rel_ids = []
+        if noteid in self.note_tags:
+            # append a separator
+            # para_id = self.create_text_node(' &nbsp; &nbsp;')
+            para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Tags:</b> &nbsp;</div>')
+            rel_ids.append(self.create_relationship_node(node_id, para_id))
+            for tag in self.note_tags[noteid]:
+                tag_id = self.json_tag_ids[tag]
+                rel_id = self.create_relationship_node(node_id, tag_id)
+                rel_ids.append(rel_id)
+            # append a separator
+            para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'\
+                                            + '&nbsp;' * 60 + '</div>')
+            rel_ids.append(self.create_relationship_node(node_id, para_id))
+
         for para in paras:
             para_rel_ids = []
             linked_note_ids = ZkConstants.Link_Matcher.findall(para)
@@ -281,6 +301,11 @@ class Zk2Setevi:
         })
         return node_id
 
+    def create_all_citations_node(self):
+        if self.bibfile is None:
+            return
+        pass    # TODO: here
+
     def create_root_node(self):
         n_id = self.create_all_notes_node()
         t_id = self.create_all_tags_node()
@@ -314,8 +339,10 @@ class Zk2Setevi:
         return json_s
 
     def create_html(self):
+        self.load_bibfile()
         self.find_all_notes_all_tags()
         self.enumerate_items()
+
         json_s = self.create_json()
         with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
@@ -338,6 +365,5 @@ if __name__ == '__main__':
     print(home)
 
     z = Zk2Setevi(home=home, folder=zk_folder)
-    z.load_bibfile()
     z.create_html()
 
