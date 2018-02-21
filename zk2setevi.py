@@ -14,7 +14,7 @@ try:
     import pypandoc
 
     def pandoc_markdown(text):
-        return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax'])
+        return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax', '--highlight-style=tango'])
     available_parsers['pandoc'] = pandoc_markdown
 except ImportError:
     pass
@@ -470,6 +470,6 @@ if __name__ == '__main__':
     zk_folder = os.path.join(home, 'scratch', 'zksetevi')
     # zk_folder = '/Users/rs/dropbox/Zettelkasten'
 
-    z = Zk2Setevi(home=home, folder=zk_folder, parser='native')
+    z = Zk2Setevi(home=home, folder=zk_folder, parser='pandoc')
     z.create_html()
 
