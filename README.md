@@ -15,7 +15,7 @@ Play with it :smile:
 
 Once this has progressed to something usable, I'll create standalone executables.
 
-## From:
+## From something like this:
 
 ![fimg](img/zettelkasten.png)
 
@@ -35,10 +35,10 @@ Once this has progressed to something usable, I'll create standalone executables
 
 ![img](img/just_noting.png)
 
-## Citation in note
-![nimg](img/tags_n_cites.png)
+## Open citation and code block in note
+![nimg](img/pandoc-code.png)
 
-## Mobile Zettelkasten :sunglasses:
+## Tables
 
-![rimg](img/android_screenshot.png)
+![rimg](img/pandoc-tables.png)
 
