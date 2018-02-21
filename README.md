@@ -42,3 +42,7 @@ Once this has progressed to something usable, I'll create standalone executables
 
 ![rimg](img/pandoc-tables.png)
 
+## Zettelkasten on Android :sunglasses:
+
+![](img/android_screenshot.png)
+
