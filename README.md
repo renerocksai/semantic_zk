@@ -12,7 +12,18 @@ This is experimental.
 
 ![img](img/main_nodes.png)
 
-## To:
+## Tags:
 
+![img](img/just_tagging.png)
+
+## Citations:
+
+![img](img/just_citing.png)
+
+## Notes:
+
+![img](img/just_noting.png)
+
+## Citation in note
 ![nimg](img/tags_n_cites.png)
 
