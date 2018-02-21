@@ -38,7 +38,7 @@ Once this has progressed to something usable, I'll create standalone executables
 ## Citation in note
 ![nimg](img/tags_n_cites.png)
 
-## A more realistic example
+## Mobile Zettelkasten :sunglasses:
 
-![rimg](img/sample_real.png)
+![rimg](img/android_screenshot.png)
 
