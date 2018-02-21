@@ -24,3 +24,5 @@ And now let's try with a bulleted list:
 * [][#AhrensHowTakeSmart2017]
 * [@HarzigMultimodalImageCaptioning2018]
 
+What a note! :-)
+

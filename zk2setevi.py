@@ -86,7 +86,7 @@ class Zk2Setevi:
         self.bib_citekeys = list(Autobib.extract_all_entries(self.bibfile).keys())
 
     def lazy_gen_citation(self, citekey):
-        ck_text = '<div style="color: gray"><i>(' + citekey + ')</i></div>'
+        ck_text = '<div style="color: green"><i>(' + citekey + ')</i></div>'
         if self.bibfile is None:
             if citekey not in self.json_citekey_ids:
                 node_id = self.create_text_node(ck_text)
@@ -98,11 +98,22 @@ class Zk2Setevi:
                 # now create linked node to bib
                 ck_node_id = self.next_id()
                 rel_id = self.create_relationship_node(ck_node_id, bib_node_id)
+                rel_ids = [rel_id]
+
+                # create node that, when unfolded, links to all other citing notes
+                notelinks_node_id = self.create_text_node('<div style="background-color: lightgray; color: purple; '
+                                                          'font-size: 12px;">&nbsp; <b>Citing:</b> &nbsp;</div>')
+                rel_id = self.create_relationship_node(ck_node_id, notelinks_node_id)
+                rel_ids.append(rel_id)
+                for citing_note_id in self.citing_notes[citekey]:
+                    rel_id = self.create_relationship_node(ck_node_id, self.json_note_ids[citing_note_id])
+                    rel_ids.append(rel_id)
+
                 self.json_nodes.append({
                     'dataNodeId': ck_node_id,
                     'name': ck_text,
                     'classAttr': 'SimpleDataNode',
-                    'relationships': [rel_id]
+                    'relationships': rel_ids
                 })
                 self.json_citekey_ids[citekey] = ck_node_id
         return self.json_citekey_ids[citekey]
@@ -182,14 +193,15 @@ class Zk2Setevi:
         if noteid in self.note_tags:
             # append a separator
             # para_id = self.create_text_node(' &nbsp; &nbsp;')
-            para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Tags:</b> &nbsp;</div>')
+            para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">'
+                                            '&nbsp; <b>Tags:</b> &nbsp;</div>')
             rel_ids.append(self.create_relationship_node(node_id, para_id))
             for tag in self.note_tags[noteid]:
                 tag_id = self.json_tag_ids[tag]
                 rel_id = self.create_relationship_node(node_id, tag_id)
                 rel_ids.append(rel_id)
             # append a separator
-            para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'\
+            para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'
                                             + '&nbsp;' * 60 + '</div>')
             rel_ids.append(self.create_relationship_node(node_id, para_id))
 
@@ -202,20 +214,23 @@ class Zk2Setevi:
             if linked_note_ids:
                 # append a separator
                 # para_id = self.create_text_node(' &nbsp; &nbsp;')
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
+                                                '12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for note_id in [self.cut_after_note_id(x) for x in linked_note_ids]:
                 rel_id = self.create_note_link_node(note_id, para_id)
                 rel_ids.append(rel_id)
             if linked_note_ids:
                 # append a separator
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
+                                                ' <b>▪</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             citekeys = Autobib.find_citations(para, self.bib_citekeys)
             if citekeys:
                 # append a separator
                 # para_id = self.create_text_node(' &nbsp; &nbsp;')
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Cited:</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
+                                                '12px;">&nbsp; <b>Cited:</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for citekey in citekeys:
                 ck_node_id = self.lazy_gen_citation(citekey)
@@ -223,7 +238,8 @@ class Zk2Setevi:
                 rel_ids.append(rel_id)
             if citekeys:
                 # append a separator
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; '
+                                                '<b>▪</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         # embed the chunks into a note node
@@ -304,14 +320,30 @@ class Zk2Setevi:
     def create_all_citations_node(self):
         if self.bibfile is None:
             return
-        pass    # TODO: here
+        citekeys = sorted(self.bib_citekeys)
+        node_id = self.next_id()
+        rel_ids = []
+        for citekey in citekeys:
+            if citekey in self.citing_notes:
+                rel_id = self.create_relationship_node(node_id, self.json_citekey_ids[citekey])
+                rel_ids.append(rel_id)
+        self.json_nodes.append({
+            'dataNodeId': node_id,
+            'name': '@citations',
+            'classAttr': 'SimpleDataNode',
+            'relationships': rel_ids
+        })
+        return node_id
 
     def create_root_node(self):
         n_id = self.create_all_notes_node()
         t_id = self.create_all_tags_node()
+        c_id = self.create_all_citations_node()
+
         root_id = self.next_id()
         rel_ids = [self.create_relationship_node(root_id, t_id),
-                   self.create_relationship_node(root_id, n_id)]
+                   self.create_relationship_node(root_id, n_id),
+                   self.create_relationship_node(root_id, c_id)]
         self.json_nodes.append({
             'dataNodeId': root_id,
             'name': 'Zettelkasten',
@@ -344,7 +376,8 @@ class Zk2Setevi:
         self.enumerate_items()
 
         json_s = self.create_json()
-        with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8', errors='ignore') as f:
+        with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8',
+                  errors='ignore') as f:
             lines = f.readlines()
 
         output_lines = []
