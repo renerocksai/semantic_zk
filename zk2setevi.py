@@ -204,6 +204,23 @@ class Zk2Setevi:
         for tag in sorted(self.tag_notes.keys()):
             self.json_tag_ids[tag] = self.next_id()
 
+    @staticmethod
+    def split_into_paragraphs(text):
+        paras = []
+        in_code_block = False
+
+        current_para = ''
+        for line in text.split('\n'):
+            if not line:
+                if not in_code_block:
+                    paras.append(current_para)
+                    current_para = ''
+                    continue
+            if line.startswith('~~~') or line.startswith('```'):
+                in_code_block = not in_code_block
+            current_para += line + '\n'
+        return paras
+
     def create_nodes_from_note(self, noteid):
         """
         Note links after paragraph
@@ -215,7 +232,7 @@ class Zk2Setevi:
 
         filn = os.path.join(self.folder, filn)
         with open(filn, mode='r', encoding='utf-8', errors='ignore') as f:
-            paras = f.read().split('\n\n')
+            paras = self.split_into_paragraphs(f.read())
 
         rel_ids = []
         if noteid in self.note_tags:
@@ -404,7 +421,11 @@ class Zk2Setevi:
         i = 0
         for note_id in sorted(self.note_titles.keys()):
             i += 1
-            print('\r{:4d} / {:4d} [{:3d}%] Processing note    {}'.format(i, num_notes, int(i / num_notes * 100), note_id),
+            nice_title = self.note_titles[note_id]
+            if len(nice_title) > 30:
+                nice_title = nice_title[:27] + '...'
+            print('\r{:4d} / {:4d} [{:3d}%] Processing note    {} {}'.format(i, num_notes, int(i / num_notes * 100),
+                                                                             note_id, nice_title),
                   end='', flush=True)
             self.create_nodes_from_note(note_id)
         print()
@@ -449,6 +470,6 @@ if __name__ == '__main__':
     zk_folder = os.path.join(home, 'scratch', 'zksetevi')
     # zk_folder = '/Users/rs/dropbox/Zettelkasten'
 
-    z = Zk2Setevi(home=home, folder=zk_folder, parser='pandoc')
+    z = Zk2Setevi(home=home, folder=zk_folder, parser='native')
     z.create_html()
 
