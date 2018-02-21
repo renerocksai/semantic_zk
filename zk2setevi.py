@@ -9,8 +9,24 @@ import markdown as md
 import json
 
 
+available_parsers = {}
+try:
+    import pypandoc
+
+    def pandoc_markdown(text):
+        return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax'])
+    available_parsers['pandoc'] = pandoc_markdown
+except ImportError:
+    pass
+
+
+def native_markdown(text):
+    return md.markdown(text)
+available_parsers['native'] = native_markdown
+
+
 class Zk2Setevi:
-    def __init__(self, home=None, folder=None, bibfile=None, extension='.md', linkstyle='double'):
+    def __init__(self, home=None, folder=None, bibfile=None, extension='.md', linkstyle='double', parser=None):
         if home is None:
             raise RuntimeError('no home')
         if folder is None:
@@ -19,6 +35,15 @@ class Zk2Setevi:
         self.folder = folder
         self.extension = extension
         self.linkstyle = linkstyle
+
+        if parser is None:
+            parser = 'native'
+        if parser in available_parsers:
+            self.markdown = available_parsers[parser]
+            print('Using parser `{}`'.format(parser))
+        else:
+            print('Parser `{}` is not available; reverting back to native!'.format(parser))
+            self.markdown = available_parsers['native']
 
         if linkstyle not in ['single', 'double', '§']:
             linkstyle = 'double'
@@ -97,7 +122,7 @@ class Zk2Setevi:
         else:
             if citekey not in self.json_citekey_ids:
                 d = Autobib.create_bibliography('@' + citekey, self.bibfile, p_citekeys=self.bib_citekeys)
-                bib_node_id = self.create_text_node(md.markdown(d[citekey]))
+                bib_node_id = self.create_text_node(self.markdown(d[citekey]))
                 # now create linked node to bib
                 ck_node_id = self.next_id()
                 rel_id = self.create_relationship_node(ck_node_id, bib_node_id)
@@ -257,7 +282,7 @@ class Zk2Setevi:
         node_id = self.next_id()
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': md.markdown(text),
+            'name': self.markdown(text),
             'classAttr': 'SimpleDataNode',
             'relationships': []
         })
@@ -282,7 +307,14 @@ class Zk2Setevi:
         # also create all tag notes
         node_id = self.next_id()
         rel_ids = []
+
+        num_tags = len(self.tag_notes.keys())
+        i = 0
+
         for tag in sorted(self.tag_notes.keys()):
+            i += 1
+            print('\r{:4d} / {:4d} [{:3d}%] Processing tag     {}'.format(i, num_tags, int(i / num_tags * 100), tag),
+                  end='', flush=True)
             note_ids = self.tag_notes[tag]
             tag_node = self.json_tag_ids[tag]
             tag_rel_ids = []
@@ -297,6 +329,7 @@ class Zk2Setevi:
             })
             rel_id = self.create_relationship_node(node_id, tag_node)
             rel_ids.append(rel_id)
+        print()
         self.json_nodes.append({
             'dataNodeId': node_id,
             'name': '#tags',
@@ -309,6 +342,7 @@ class Zk2Setevi:
         json_note_ids = sorted(list(self.json_note_ids.keys()))
         node_id = self.next_id()
         rel_node_ids = []
+
         for note_id in json_note_ids:
             rel_id = self.create_note_link_node(note_id, node_id)
             rel_node_ids.append(rel_id)
@@ -326,10 +360,20 @@ class Zk2Setevi:
         citekeys = sorted(self.bib_citekeys)
         node_id = self.next_id()
         rel_ids = []
+
+        num_ck = len(citekeys)
+        i = 0
+
         for citekey in citekeys:
+            i += 1
             if citekey in self.citing_notes:
+                print('\r{:4d} / {:4d} [{:3d}%] Processing citekey {}'.format(i, num_ck, int(i / num_ck * 100),
+                                                                              citekey), end='', flush=True)
                 rel_id = self.create_relationship_node(node_id, self.json_citekey_ids[citekey])
                 rel_ids.append(rel_id)
+        # make sure we report 100%
+        print('\r{:4d} / {:4d} [{:3d}%] Processing citekey {}'.format(i, num_ck, int(i / num_ck * 100),
+                                                                      citekey))
         self.json_nodes.append({
             'dataNodeId': node_id,
             'name': '@citations',
@@ -356,9 +400,14 @@ class Zk2Setevi:
         return root_id
 
     def create_all_nodes(self):
+        num_notes = len(self.note_titles.keys())
+        i = 0
         for note_id in sorted(self.note_titles.keys()):
+            i += 1
+            print('\r{:4d} / {:4d} [{:3d}%] Processing note    {}'.format(i, num_notes, int(i / num_notes * 100), note_id),
+                  end='', flush=True)
             self.create_nodes_from_note(note_id)
-
+        print()
         root_id = self.create_root_node()
         return root_id
 
@@ -398,8 +447,8 @@ if __name__ == '__main__':
     print('ZK to Setevi')
     home = os.path.dirname(os.path.abspath(__file__))
     zk_folder = os.path.join(home, 'scratch', 'zksetevi')
-    print(home)
+    # zk_folder = '/Users/rs/dropbox/Zettelkasten'
 
-    z = Zk2Setevi(home=home, folder=zk_folder)
+    z = Zk2Setevi(home=home, folder=zk_folder, parser='pandoc')
     z.create_html()
 
