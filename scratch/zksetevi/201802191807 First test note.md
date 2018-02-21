@@ -20,4 +20,9 @@ And now let's try with a bulleted list:
 * [[201802191808]] Second test note
 * [[201802191810]] A third note
 
+* @FastZettelkastenmethodeKontrollieredein2015
+* [][#AhrensHowTakeSmart2017]
+* [@HarzigMultimodalImageCaptioning2018]
+
+What a note! :-)
 

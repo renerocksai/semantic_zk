@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 from zkutils import *
+from bibstuff import Autobib
 import os
 from collections import defaultdict
 import markdown as md
@@ -9,7 +10,7 @@ import json
 
 
 class Zk2Setevi:
-    def __init__(self, home=None, folder=None, extension='.md', linkstyle='double'):
+    def __init__(self, home=None, folder=None, bibfile=None, extension='.md', linkstyle='double'):
         if home is None:
             raise RuntimeError('no home')
         if folder is None:
@@ -30,11 +31,19 @@ class Zk2Setevi:
         else:
             self.link_prefix = '§'
             self.link_postfix = ''
+
+        self.bibfile = bibfile
+        if bibfile is None:
+            # try to find it in the ZK foldder
+            self.bibfile = Autobib.look_for_bibfile(self.folder)
+        self.bib_citekeys = []
         self.note_tags = {}
         self.tag_notes = defaultdict(set)
         self.note_titles = {}
+        self.citing_notes = defaultdict(set)
         self.json_note_ids = {}
         self.json_tag_ids = {}
+        self.json_citekey_ids = {}
         self.json_id_counter = -1
         self.json_nodes = []
 
@@ -64,12 +73,53 @@ class Zk2Setevi:
             _, title = filn.split(' ', 1)
             title = title.replace(self.extension, '')
             self.note_titles[note_id] = title
-            tags = list(self.extract_tags(filn))
+            tags, citekeys = self.extract_tags_and_citekeys(filn)
 
             if tags:
                 self.note_tags[note_id] = tags
                 for tag in tags:
                     self.tag_notes[tag].add(note_id)
+
+            for citekey in citekeys:
+                self.citing_notes[citekey].add(note_id)
+
+    def load_bibfile(self):
+        if self.bibfile is None:
+            return
+        self.bib_citekeys = list(Autobib.extract_all_entries(self.bibfile).keys())
+
+    def lazy_gen_citation(self, citekey):
+        ck_text = '<div style="color: green"><i>(' + citekey + ')</i></div>'
+        if self.bibfile is None:
+            if citekey not in self.json_citekey_ids:
+                node_id = self.create_text_node(ck_text)
+                self.json_citekey_ids[citekey] = node_id
+        else:
+            if citekey not in self.json_citekey_ids:
+                d = Autobib.create_bibliography('@' + citekey, self.bibfile, p_citekeys=self.bib_citekeys)
+                bib_node_id = self.create_text_node(md.markdown(d[citekey]))
+                # now create linked node to bib
+                ck_node_id = self.next_id()
+                rel_id = self.create_relationship_node(ck_node_id, bib_node_id)
+                rel_ids = [rel_id]
+
+                # create node that, when unfolded, links to all other citing notes
+                notelinks_node_id = self.create_text_node('<div style="background-color: lightgray; color: purple; '
+                                                          'font-size: 12px;">&nbsp; <b>Citing:</b> &nbsp;</div>')
+                rel_id = self.create_relationship_node(ck_node_id, notelinks_node_id)
+                rel_ids.append(rel_id)
+                for citing_note_id in self.citing_notes[citekey]:
+                    rel_id = self.create_relationship_node(ck_node_id, self.json_note_ids[citing_note_id])
+                    rel_ids.append(rel_id)
+
+                self.json_nodes.append({
+                    'dataNodeId': ck_node_id,
+                    'name': ck_text,
+                    'classAttr': 'SimpleDataNode',
+                    'relationships': rel_ids
+                })
+                self.json_citekey_ids[citekey] = ck_node_id
+        return self.json_citekey_ids[citekey]
 
     @staticmethod
     def cut_after_note_id(text):
@@ -103,7 +153,7 @@ class Zk2Setevi:
         if len(candidates) > 0:
             return candidates[0]
 
-    def extract_tags(self, file):
+    def extract_tags_and_citekeys(self, file):
         """
         Extract #tags from file.
         Returns all words starting with `#`.
@@ -112,11 +162,13 @@ class Zk2Setevi:
         tags = set()
         full_p = os.path.join(self.folder, file)
         with open(full_p, mode='r', encoding='utf-8') as f:
-            for line in f:
+            text = f.read()
+            for line in text.split('\n'):
                 line = line.strip()
                 for tag in re.findall(ZkConstants.RE_TAGS_PY, line):
                     tags.add(tag[0])
-        return tags
+        citekeys = Autobib.find_citations(text, self.bib_citekeys)
+        return tags, citekeys
 
     def enumerate_items(self):
         """
@@ -126,58 +178,6 @@ class Zk2Setevi:
             self.json_note_ids[noteid] = self.next_id()
         for tag in sorted(self.tag_notes.keys()):
             self.json_tag_ids[tag] = self.next_id()
-
-    def create_nodes_from_note_old(self, noteid):
-        """
-        Note links in place
-        """
-        filn = self.note_file_by_id(note_id=noteid)
-        if not filn:
-            return None
-        node_id = self.json_note_ids[noteid]
-
-        filn = os.path.join(self.folder, filn)
-        with open(filn, mode='r', encoding='utf-8', errors='ignore') as f:
-            lines = f.readlines()
-        chunk_rel_ids = []
-        current_chunk = ''
-        for line in lines:
-            has_links = ZkConstants.Link_Matcher.search(line)
-            if not has_links:
-                current_chunk += line + '\n'
-            else:
-                # split line into chunks
-                # terminate current chunk with text before link
-                note_id_expected = False
-                for item in ZkConstants.Link_Matcher.split(line):
-                    if item is None:
-                        continue
-                    if item.startswith('[') or item.startswith('§'):
-                        note_id_expected = True
-                        continue
-                    if item.startswith(']'):
-                        continue
-                    if note_id_expected:
-                        # finalize current chunk
-                        chunk_id = self.create_text_node(current_chunk)
-                        chunk_rel_ids.append(self.create_relationship_node(node_id, chunk_id))
-                        note_id_expected = False
-                        current_chunk = ''
-                        # now process link
-                        rel_id = self.create_note_link_node(item, chunk_id)
-                        chunk_rel_ids.append(rel_id)
-                    else:
-                        current_chunk += item
-        if current_chunk:
-            chunk_id = self.create_text_node(current_chunk)
-            chunk_rel_ids.append(self.create_relationship_node(node_id, chunk_id))
-        # embed the chunks into a note node
-        self.json_nodes.append({
-            'dataNodeId': node_id,
-            'name': self.note_titles[noteid],
-            'classAttr': 'SimpleDataNode',
-            'relationships': chunk_rel_ids
-        })
 
     def create_nodes_from_note(self, noteid):
         """
@@ -193,6 +193,21 @@ class Zk2Setevi:
             paras = f.read().split('\n\n')
 
         rel_ids = []
+        if noteid in self.note_tags:
+            # append a separator
+            # para_id = self.create_text_node(' &nbsp; &nbsp;')
+            para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">'
+                                            '&nbsp; <b>Tags:</b> &nbsp;</div>')
+            rel_ids.append(self.create_relationship_node(node_id, para_id))
+            for tag in self.note_tags[noteid]:
+                tag_id = self.json_tag_ids[tag]
+                rel_id = self.create_relationship_node(node_id, tag_id)
+                rel_ids.append(rel_id)
+            # append a separator
+            para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'
+                                            + '&nbsp;' * 60 + '</div>')
+            rel_ids.append(self.create_relationship_node(node_id, para_id))
+
         for para in paras:
             para_rel_ids = []
             linked_note_ids = ZkConstants.Link_Matcher.findall(para)
@@ -202,14 +217,32 @@ class Zk2Setevi:
             if linked_note_ids:
                 # append a separator
                 # para_id = self.create_text_node(' &nbsp; &nbsp;')
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
+                                                '12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for note_id in [self.cut_after_note_id(x) for x in linked_note_ids]:
                 rel_id = self.create_note_link_node(note_id, para_id)
                 rel_ids.append(rel_id)
             if linked_note_ids:
                 # append a separator
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; <b>▪</b> &nbsp;</div>')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
+                                                ' <b>▪</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
+            citekeys = Autobib.find_citations(para, self.bib_citekeys)
+            if citekeys:
+                # append a separator
+                # para_id = self.create_text_node(' &nbsp; &nbsp;')
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
+                                                '12px;">&nbsp; <b>Cited:</b> &nbsp;</div>')
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
+            for citekey in citekeys:
+                ck_node_id = self.lazy_gen_citation(citekey)
+                rel_id = self.create_relationship_node(node_id, ck_node_id)
+                rel_ids.append(rel_id)
+            if citekeys:
+                # append a separator
+                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; '
+                                                '<b>▪</b> &nbsp;</div>')
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         # embed the chunks into a note node
@@ -287,12 +320,33 @@ class Zk2Setevi:
         })
         return node_id
 
+    def create_all_citations_node(self):
+        if self.bibfile is None:
+            return
+        citekeys = sorted(self.bib_citekeys)
+        node_id = self.next_id()
+        rel_ids = []
+        for citekey in citekeys:
+            if citekey in self.citing_notes:
+                rel_id = self.create_relationship_node(node_id, self.json_citekey_ids[citekey])
+                rel_ids.append(rel_id)
+        self.json_nodes.append({
+            'dataNodeId': node_id,
+            'name': '@citations',
+            'classAttr': 'SimpleDataNode',
+            'relationships': rel_ids
+        })
+        return node_id
+
     def create_root_node(self):
         n_id = self.create_all_notes_node()
         t_id = self.create_all_tags_node()
+        c_id = self.create_all_citations_node()
+
         root_id = self.next_id()
         rel_ids = [self.create_relationship_node(root_id, t_id),
-                   self.create_relationship_node(root_id, n_id)]
+                   self.create_relationship_node(root_id, n_id),
+                   self.create_relationship_node(root_id, c_id)]
         self.json_nodes.append({
             'dataNodeId': root_id,
             'name': 'Zettelkasten',
@@ -320,10 +374,13 @@ class Zk2Setevi:
         return json_s
 
     def create_html(self):
+        self.load_bibfile()
         self.find_all_notes_all_tags()
         self.enumerate_items()
+
         json_s = self.create_json()
-        with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8', errors='ignore') as f:
+        with open(os.path.join(self.home, 'data', 'template-default.html'), mode='r', encoding='utf-8',
+                  errors='ignore') as f:
             lines = f.readlines()
 
         output_lines = []
