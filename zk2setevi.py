@@ -73,8 +73,16 @@ if __name__ == "__main__":
     args = get_parser().parse_args()
 
     # try to find out our home
+    frozen = 'not'
+    if getattr(sys, 'frozen', False):
+        # we are running in a bundle
+        frozen = 'ever so'
+        bundle_dir = sys._MEIPASS
+    else:
+        # we are running in a normal Python environment
+        bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-    converter = Zk2Setevi(folder=args.input_folder, out_folder=args.output_folder,
+    converter = Zk2Setevi(home=bundle_dir,folder=args.input_folder, out_folder=args.output_folder,
                           bibfile=args.bibfile, extension=args.extension,
                           linkstyle=args.linkstyle, parser=args.parser,
                           max_img_width=args.max_img_width)

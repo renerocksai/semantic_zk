@@ -3,8 +3,7 @@
 
 from .zkutils import *
 from .bibstuff import Autobib
-from .setevi_template import template
-
+import sys
 import os
 from collections import defaultdict
 import markdown as md
@@ -15,45 +14,34 @@ import imghdr
 from pygments import highlight
 from pygments.lexers import guess_lexer
 from pygments.formatters.html import HtmlFormatter
+import pypandoc
+import pymmd
 
-available_parsers = {}
-try:
-    import pypandoc
 
-    def pandoc_markdown(text):
-        return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax', '--highlight-style=tango'])
+def pandoc_markdown(text):
+    return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax', '--highlight-style=tango'])
 
-    available_parsers['pandoc'] = pandoc_markdown
-except ImportError:
-    pass
 
-try:
-    import pymmd
-
-    def mmd_markdown(text):
-        return pymmd.convert(text, ext=pymmd.SNIPPET)
-
-    available_parsers['mmd'] = mmd_markdown
-except ImportError:
-    pass
+def mmd_markdown(text):
+    return pymmd.convert(text, ext=pymmd.SNIPPET)
 
 
 def native_markdown(text):
     return md.markdown(text)
 
-available_parsers['native'] = native_markdown
+mmd_markdown('pyinstaller')
+
+available_parsers = {'native': native_markdown, 'pandoc': pandoc_markdown, 'mmd': mmd_markdown}
 
 
 class Zk2Setevi:
-    def __init__(self, template=template, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
+    def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
                  parser=None, max_img_width=320):
-        if template is None:
-            raise RuntimeError('no html template')
         if folder is None:
             raise RuntimeError('no ZK folder')
         if out_folder is None:
             raise RuntimeError('no output folder')
-        self.template = template
+        self.home = home
         os.makedirs(out_folder, exist_ok=True)
         self.out_folder = out_folder
         self.img_folder_rel = 'imgs'
@@ -572,8 +560,9 @@ class Zk2Setevi:
             'rootNode': root_id
         }
         json_s = json.dumps(json_dict)
-        with open(os.path.join(self.out_folder, 'out.json'), mode='w', encoding='utf-8') as f:
-            f.write(json_s)
+        if False:
+            with open(os.path.join(self.out_folder, 'out.json'), mode='w', encoding='utf-8') as f:
+                f.write(json_s)
         return json_s
 
     def create_html(self):
@@ -581,8 +570,11 @@ class Zk2Setevi:
         self.find_all_notes_all_tags()
         self.enumerate_items()
 
+
         json_s = self.create_json()
-        lines = self.template.split('\n')
+        with open(os.path.join(self.home, 'data', 'setevi-template.html'), mode='r', encoding='utf-8',
+                  errors='ignore') as f:
+            lines = f.readlines()
         output_lines = []
         for line in lines:
             if '/*GENERATED JSON*/' in line:
