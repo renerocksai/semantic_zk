@@ -1,3 +1,4 @@
+template = '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3236,3 +3237,4 @@ define("visual/TextWithLinks", ["require", "exports", "visual/Callbacks", "visua
 </script>
 </body>
 </html>
+'''
