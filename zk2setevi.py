@@ -7,6 +7,9 @@ import os
 from collections import defaultdict
 import markdown as md
 import json
+import shutil
+import struct
+import imghdr
 
 
 available_parsers = {}
@@ -26,24 +29,35 @@ available_parsers['native'] = native_markdown
 
 
 class Zk2Setevi:
-    def __init__(self, home=None, folder=None, bibfile=None, extension='.md', linkstyle='double', parser=None):
+    def __init__(self, home=None, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
+                 parser=None, max_img_width=320):
         if home is None:
             raise RuntimeError('no home')
         if folder is None:
-            raise RuntimeError('no folder')
+            raise RuntimeError('no ZK folder')
+        if out_folder is None:
+            raise RuntimeError('no output folder')
+        os.makedirs(out_folder, exist_ok=True)
+        self.out_folder = out_folder
+        self.img_folder_rel = 'imgs'
+        self.img_folder = os.path.join(out_folder, self.img_folder_rel)
+        os.makedirs(self.img_folder, exist_ok=True)
         self.home = home
         self.folder = folder
         self.extension = extension
         self.linkstyle = linkstyle
+        self.max_img_width=max_img_width
 
         if parser is None:
             parser = 'native'
+        self.parser = parser
         if parser in available_parsers:
             self.markdown = available_parsers[parser]
             print('Using parser `{}`'.format(parser))
         else:
             print('Parser `{}` is not available; reverting back to native!'.format(parser))
             self.markdown = available_parsers['native']
+            self.parser = 'native'
 
         if linkstyle not in ['single', 'double', '§']:
             linkstyle = 'double'
@@ -221,6 +235,78 @@ class Zk2Setevi:
             current_para += line + '\n'
         return paras
 
+    def handle_local_imgs(self, text):
+        """Check for local images and try to copy them to imgs/"""
+        new_text = text
+        for pre, path, post, opt in ZkConstants.Img_Matcher.findall(text):
+            if not path.startswith('http'):
+                source_path = os.path.join(self.folder, path)
+                if os.path.exists(source_path):
+                    dest_path = os.path.join(self.img_folder, os.path.basename(path))
+                    shutil.copy2(source_path, dest_path)
+                    # scale img wide
+                    size = self.get_image_size(dest_path)
+                    if not size:
+                        print('\nError: unknown image format:', source_path)
+                        continue
+                    w, h = size
+                    max_width = self.max_img_width
+                    if w > max_width:
+                        m = max_width / w
+                        h *= m
+                        w = max_width
+                    imgattr = 'width={}px height={}px'.format(w, int(h))
+
+                    # now replace link
+                    orig_markdown = pre + path + post + opt
+                    dest_markdown = pre + os.path.join(self.img_folder_rel, os.path.basename(path))
+                    if self.parser == 'pandoc':
+                        dest_markdown += post + '{' + imgattr + '}'
+                    elif self.parser == 'native':
+                        dest_markdown += post + opt
+                    else:
+                        dest_markdown += ' ' + imgattr + post
+                    new_text = new_text.replace(orig_markdown, dest_markdown)
+        return new_text
+
+    @staticmethod
+    def get_image_size(img):
+        """
+        Determine the image type of img and return its size.
+        """
+        with open(img, 'rb') as f:
+            head = f.read(24)
+            # print('head:\n', repr(head))
+            if len(head) != 24:
+                return
+            if imghdr.what(img) == 'png':
+                check = struct.unpack('>i', head[4:8])[0]
+                if check != 0x0d0a1a0a:
+                    return
+                width, height = struct.unpack('>ii', head[16:24])
+            elif imghdr.what(img) == 'gif':
+                width, height = struct.unpack('<HH', head[6:10])
+            elif imghdr.what(img) == 'jpeg':
+                try:
+                    f.seek(0)  # Read 0xff next
+                    size = 2
+                    ftype = 0
+                    while not 0xc0 <= ftype <= 0xcf:
+                        f.seek(size, 1)
+                        byte = f.read(1)
+                        while ord(byte) == 0xff:
+                            byte = f.read(1)
+                        ftype = ord(byte)
+                        size = struct.unpack('>H', f.read(2))[0] - 2
+                    # SOFn block
+                    f.seek(1, 1)  # skip precision byte.
+                    height, width = struct.unpack('>HH', f.read(4))
+                except Exception:
+                    return
+            else:
+                return
+            return width, height
+
     def create_nodes_from_note(self, noteid):
         """
         Note links after paragraph
@@ -232,7 +318,9 @@ class Zk2Setevi:
 
         filn = os.path.join(self.folder, filn)
         with open(filn, mode='r', encoding='utf-8', errors='ignore') as f:
-            paras = self.split_into_paragraphs(f.read())
+            whole_text = f.read()
+            whole_text = self.handle_local_imgs(whole_text)
+            paras = self.split_into_paragraphs(whole_text)
 
         rel_ids = []
         if noteid in self.note_tags:
@@ -439,7 +527,7 @@ class Zk2Setevi:
             'rootNode': root_id
         }
         json_s = json.dumps(json_dict)
-        with open(os.path.join(self.home, 'output', 'out.json'), mode='w', encoding='utf-8') as f:
+        with open(os.path.join(self.out_folder, 'out.json'), mode='w', encoding='utf-8') as f:
             f.write(json_s)
         return json_s
 
@@ -459,7 +547,7 @@ class Zk2Setevi:
                 line = line.replace('/*GENERATED JSON*/', json_s)
             output_lines.append(line)
 
-        with open(os.path.join(self.home, 'output', 'out.html'), mode='w', encoding='utf-8') as f:
+        with open(os.path.join(self.out_folder, 'out.html'), mode='w', encoding='utf-8') as f:
             for line in output_lines:
                 f.write(line)
 
@@ -468,8 +556,9 @@ if __name__ == '__main__':
     print('ZK to Setevi')
     home = os.path.dirname(os.path.abspath(__file__))
     zk_folder = os.path.join(home, 'scratch', 'zksetevi')
+    output_folder = 'output'
     # zk_folder = '/Users/rs/dropbox/Zettelkasten'
 
-    z = Zk2Setevi(home=home, folder=zk_folder, parser='pandoc')
+    z = Zk2Setevi(home=home, folder=zk_folder, out_folder=output_folder, parser='pandoc')
     z.create_html()
 

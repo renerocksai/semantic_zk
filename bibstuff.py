@@ -127,10 +127,16 @@ class Autobib:
         Find all mentioned citekeys in text
         """
         citekeys_re = [re.escape('@' + citekey) for citekey in citekeys]
-        citekeys_re.extend([re.escape('#' + citekey) for citekey in citekeys])
-        founds = re.findall('|'.join(list(citekeys_re)), text)
-        founds = set([found_citekey[1:] for found_citekey in founds])
-        return founds
+        citekeys_re.extend([re.escape('[#' + citekey) for citekey in citekeys])
+        founds_raw = re.findall('|'.join(list(citekeys_re)), text)
+        founds = []
+        for citekey in founds_raw:
+            if citekey.startswith('[#'):
+                citekey = citekey[2:]
+            else:
+                citekey = citekey[1:]
+            founds.append(citekey)
+        return set(founds)
 
     @staticmethod
     def create_bibliography(text, bibfile, p_citekeys=None, pandoc='pandoc'):
