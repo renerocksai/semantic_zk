@@ -243,6 +243,7 @@ class Zk2Setevi:
                     current_para = ''
                     continue
             if line.startswith('~~~') or line.startswith('```'):
+                line = line.replace('~~~', '```')
                 in_code_block = not in_code_block
             current_para += line + '\n'
         return paras
@@ -285,7 +286,6 @@ class Zk2Setevi:
                                 alt_text = ''
                             dest_markdown = '<img src="{}" alt="{}" width="{}px" height="{}px"><p>{}</p>'.format(
                                 dest_rel_path, alt_text, w, h, alt_text[1:-1])
-                    print(dest_markdown)
                     new_text = new_text.replace(orig_markdown, dest_markdown)
         return new_text
 
@@ -579,6 +579,6 @@ if __name__ == '__main__':
     output_folder = 'output'
     # zk_folder = '/Users/rs/dropbox/Zettelkasten'
 
-    z = Zk2Setevi(home=home, folder=zk_folder, out_folder=output_folder, parser='pandoc')
+    z = Zk2Setevi(home=home, folder=zk_folder, out_folder=output_folder, parser='mmd')
     z.create_html()
 
