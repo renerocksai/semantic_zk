@@ -10,7 +10,7 @@ Let's link to the other notes, and to self, in a bulleted list:
 * [[201802191810]] A third note
 
 ## A code block
-~~~python
+```python
 def evaluate_sentence(self, sentence, spo_gts):
     """
     Evaluate a single sentence. Return best result
@@ -30,7 +30,7 @@ def evaluate_sentence(self, sentence, spo_gts):
         if matching_score == 7:
             break
     return max_score, max_matchings
-~~~
+```
 
 ## Citations
 

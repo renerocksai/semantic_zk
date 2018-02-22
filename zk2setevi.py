@@ -18,13 +18,25 @@ try:
 
     def pandoc_markdown(text):
         return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax', '--highlight-style=tango'])
+
     available_parsers['pandoc'] = pandoc_markdown
+except ImportError:
+    pass
+
+try:
+    import pymmd
+
+    def mmd_markdown(text):
+        return pymmd.convert(text, ext=pymmd.SNIPPET)
+
+    available_parsers['mmd'] = mmd_markdown
 except ImportError:
     pass
 
 
 def native_markdown(text):
     return md.markdown(text)
+
 available_parsers['native'] = native_markdown
 
 
@@ -249,23 +261,31 @@ class Zk2Setevi:
                     if not size:
                         print('\nError: unknown image format:', source_path)
                         continue
+                    dest_rel_path = os.path.join(self.img_folder_rel, os.path.basename(path))
                     w, h = size
                     max_width = self.max_img_width
                     if w > max_width:
                         m = max_width / w
                         h *= m
                         w = max_width
-                    imgattr = 'width={}px height={}px'.format(w, int(h))
+                        h = int(h)
 
                     # now replace link
                     orig_markdown = pre + path + post + opt
-                    dest_markdown = pre + os.path.join(self.img_folder_rel, os.path.basename(path))
+                    dest_markdown = pre + dest_rel_path
                     if self.parser == 'pandoc':
+                        imgattr = 'width={}px height={}px'.format(w, h)
                         dest_markdown += post + '{' + imgattr + '}'
-                    elif self.parser == 'native':
-                        dest_markdown += post + opt
                     else:
-                        dest_markdown += ' ' + imgattr + post
+                        if 'width' not in path and 'height' not in path:
+                            alt_text = re.findall('(\[.*\])', pre)
+                            if alt_text:
+                                alt_text = alt_text[0]
+                            else:
+                                alt_text = ''
+                            dest_markdown = '<img src="{}" alt="{}" width="{}px" height="{}px"><p>{}</p>'.format(
+                                dest_rel_path, alt_text, w, h, alt_text[1:-1])
+                    print(dest_markdown)
                     new_text = new_text.replace(orig_markdown, dest_markdown)
         return new_text
 
