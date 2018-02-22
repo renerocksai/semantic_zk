@@ -17,6 +17,7 @@ from pygments.formatters.html import HtmlFormatter
 import pypandoc
 import pymmd
 
+pymmd.load_mmd()
 
 def pandoc_markdown(text):
     return pypandoc.convert_text(text, 'html', format='md', extra_args=['--mathjax', '--highlight-style=tango'])
