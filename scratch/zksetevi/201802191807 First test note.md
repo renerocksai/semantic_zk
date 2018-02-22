@@ -10,6 +10,9 @@ Let's link to the other notes, and to self, in a bulleted list:
 * [[201802191810]] A third note
 
 ## A code block
+
+Txt
+
 ~~~python
 def evaluate_sentence(self, sentence, spo_gts):
     """

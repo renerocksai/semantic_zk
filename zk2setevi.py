@@ -10,7 +10,9 @@ import json
 import shutil
 import struct
 import imghdr
-
+from pygments import highlight
+from pygments.lexers import guess_lexer
+from pygments.formatters.html import HtmlFormatter
 
 available_parsers = {}
 try:
@@ -143,12 +145,12 @@ class Zk2Setevi:
         ck_text = '<div style="color: green"><i>(' + citekey + ')</i></div>'
         if self.bibfile is None:
             if citekey not in self.json_citekey_ids:
-                node_id = self.create_text_node(ck_text)
+                node_id = self.create_text_node(ck_text, raw=True)
                 self.json_citekey_ids[citekey] = node_id
         else:
             if citekey not in self.json_citekey_ids:
                 d = Autobib.create_bibliography('@' + citekey, self.bibfile, p_citekeys=self.bib_citekeys)
-                bib_node_id = self.create_text_node(self.markdown(d[citekey]))
+                bib_node_id = self.create_text_node(self.markdown(d[citekey]), raw=True)
                 # now create linked node to bib
                 ck_node_id = self.next_id()
                 rel_id = self.create_relationship_node(ck_node_id, bib_node_id)
@@ -156,7 +158,8 @@ class Zk2Setevi:
 
                 # create node that, when unfolded, links to all other citing notes
                 notelinks_node_id = self.create_text_node('<div style="background-color: lightgray; color: purple; '
-                                                          'font-size: 12px;">&nbsp; <b>Citing:</b> &nbsp;</div>')
+                                                          'font-size: 12px;">&nbsp; <b>Citing:</b> &nbsp;</div>',
+                                                          raw=True)
                 rel_id = self.create_relationship_node(ck_node_id, notelinks_node_id)
                 rel_ids.append(rel_id)
                 for citing_note_id in self.citing_notes[citekey]:
@@ -327,6 +330,17 @@ class Zk2Setevi:
                 return
             return width, height
 
+    def code_highlight(self, para):
+        first_line = para.split('\n', 1)[0]
+        first_line = '#!' + first_line.replace('`', '')
+        lexer = guess_lexer(first_line)
+        formatter = HtmlFormatter(linenos=False, cssclass="highlight")
+        code = '\n'.join(para.split('\n')[1:-2])
+        html = '<div id="scoped-content"><style type="text/css">' + formatter.get_style_defs('.highlight') + '</style>'
+        html += highlight(code, lexer, formatter)
+        html += '</div>'
+        return html
+
     def create_nodes_from_note(self, noteid):
         """
         Note links after paragraph
@@ -345,9 +359,8 @@ class Zk2Setevi:
         rel_ids = []
         if noteid in self.note_tags:
             # append a separator
-            # para_id = self.create_text_node(' &nbsp; &nbsp;')
             para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: 12px;">'
-                                            '&nbsp; <b>Tags:</b> &nbsp;</div>')
+                                            '&nbsp; <b>Tags:</b> &nbsp;</div>', raw=True)
             rel_ids.append(self.create_relationship_node(node_id, para_id))
             for tag in self.note_tags[noteid]:
                 tag_id = self.json_tag_ids[tag]
@@ -355,20 +368,23 @@ class Zk2Setevi:
                 rel_ids.append(rel_id)
             # append a separator
             para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'
-                                            + '&nbsp;' * 60 + '</div>')
+                                            + '&nbsp;' * 60 + '</div>', raw=True)
             rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         for para in paras:
             para_rel_ids = []
             linked_note_ids = ZkConstants.Link_Matcher.findall(para)
             linked_note_ids = [l[1] for l in linked_note_ids]
-            para_id = self.create_text_node(para)
+            is_code_block = False
+            if para.startswith('```'):
+                para = self.code_highlight(para)
+                is_code_block = True
+            para_id = self.create_text_node(para, raw=is_code_block)
             rel_ids.append(self.create_relationship_node(node_id, para_id))
             if linked_note_ids:
                 # append a separator
-                # para_id = self.create_text_node(' &nbsp; &nbsp;')
                 para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
-                                                '12px;">&nbsp; <b>Links:</b> &nbsp;</div>')
+                                                '12px;">&nbsp; <b>Links:</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for note_id in [self.cut_after_note_id(x) for x in linked_note_ids]:
                 rel_id = self.create_note_link_node(note_id, para_id)
@@ -376,14 +392,19 @@ class Zk2Setevi:
             if linked_note_ids:
                 # append a separator
                 para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
-                                                ' <b>▪</b> &nbsp;</div>')
+                                                ' <b>▪</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
+
+            if is_code_block:
+                # no citekeys in raw html
+                continue
+
             citekeys = Autobib.find_citations(para, self.bib_citekeys)
             if citekeys:
                 # append a separator
                 # para_id = self.create_text_node(' &nbsp; &nbsp;')
                 para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size: '
-                                                '12px;">&nbsp; <b>Cited:</b> &nbsp;</div>')
+                                                '12px;">&nbsp; <b>Cited:</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for citekey in citekeys:
                 ck_node_id = self.lazy_gen_citation(citekey)
@@ -392,7 +413,7 @@ class Zk2Setevi:
             if citekeys:
                 # append a separator
                 para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; '
-                                                '<b>▪</b> &nbsp;</div>')
+                                                '<b>▪</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         # embed the chunks into a note node
@@ -403,11 +424,13 @@ class Zk2Setevi:
             'relationships': rel_ids
         })
 
-    def create_text_node(self, text):
+    def create_text_node(self, text, raw=False):
         node_id = self.next_id()
+        if not raw:
+            text = self.markdown(text)
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': self.markdown(text),
+            'name': text,
             'classAttr': 'SimpleDataNode',
             'relationships': []
         })
