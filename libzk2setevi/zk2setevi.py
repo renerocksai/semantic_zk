@@ -45,7 +45,7 @@ def finish_callback():
 
 class Zk2Setevi:
     def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
-                 parser=None, max_img_width=320):
+                 parser=None, max_img_width=320, progress_callback=progress_callback, finish_callback=finish_callback):
         if folder is None:
             raise RuntimeError('no ZK folder')
         if out_folder is None:
@@ -59,7 +59,9 @@ class Zk2Setevi:
         self.folder = folder
         self.extension = extension
         self.linkstyle = linkstyle
-        self.max_img_width=max_img_width
+        self.max_img_width = max_img_width
+        self.progress_callback = progress_callback
+        self.finish_callback = finish_callback
 
         if parser is None:
             parser = 'native'
@@ -446,7 +448,7 @@ class Zk2Setevi:
         })
         return node_id
 
-    def create_all_tags_node(self, progress_callback=progress_callback, finish_callback=finish_callback):
+    def create_all_tags_node(self):
         # also create all tag notes
         node_id = self.next_id()
         rel_ids = []
@@ -456,7 +458,7 @@ class Zk2Setevi:
 
         for tag in sorted(self.tag_notes.keys()):
             i += 1
-            progress_callback(i, num_tags, 'Processing tag     {}'.format(tag))
+            self.progress_callback(i, num_tags, 'Processing tag     {}'.format(tag))
             note_ids = self.tag_notes[tag]
             tag_node = self.json_tag_ids[tag]
             tag_rel_ids = []
@@ -477,7 +479,7 @@ class Zk2Setevi:
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
-        finish_callback()
+        self.finish_callback()
         return node_id
 
     def create_all_notes_node(self):
@@ -496,7 +498,7 @@ class Zk2Setevi:
         })
         return node_id
 
-    def create_all_citations_node(self, progress_callback=progress_callback, finish_callback=finish_callback):
+    def create_all_citations_node(self):
         if self.bibfile is None:
             return
         citekeys = sorted(self.bib_citekeys)
@@ -509,11 +511,11 @@ class Zk2Setevi:
         for citekey in citekeys:
             i += 1
             if citekey in self.citing_notes:
-                progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
+                self.progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
                 rel_id = self.create_relationship_node(node_id, self.json_citekey_ids[citekey])
                 rel_ids.append(rel_id)
         # make sure we report 100%
-        progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
+        self.progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
 
         self.json_nodes.append({
             'dataNodeId': node_id,
@@ -521,7 +523,7 @@ class Zk2Setevi:
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
-        finish_callback()
+        self.finish_callback()
         return node_id
 
     def create_root_node(self):
@@ -541,7 +543,7 @@ class Zk2Setevi:
         })
         return root_id
 
-    def create_all_nodes(self, progress_callback=progress_callback, finish_callback=finish_callback):
+    def create_all_nodes(self):
         num_notes = len(self.note_titles.keys())
         i = 0
         fmt = 'Processing note    {} {}                              '
@@ -550,9 +552,9 @@ class Zk2Setevi:
             nice_title = self.note_titles[note_id]
             if len(nice_title) > 30:
                 nice_title = nice_title[:27] + '...'
-            progress_callback(i, num_notes, fmt.format(note_id, nice_title))
+            self.progress_callback(i, num_notes, fmt.format(note_id, nice_title))
             self.create_nodes_from_note(note_id)
-        finish_callback()
+        self.finish_callback()
         root_id = self.create_root_node()
         return root_id
 
