@@ -61,6 +61,7 @@ You'll need:
     * pypandoc
     * pymmd
     * markdown
+    * pygments
 
 For the [graphical tool](#graphical-tool) you'll also need the following modules:
 
@@ -155,9 +156,6 @@ optional arguments:
   -p PARSER, --parser PARSER
                         markdown parser: mmd=internal Multimarkdown,
                         pandoc=pandoc, native=native (default: mmd)
-  -w MAX_IMG_WIDTH, --max-img-width MAX_IMG_WIDTH
-                        maximum width of images (default: 320)
-
 ```
 
 ## Graphical Tool

@@ -57,11 +57,6 @@ def get_parser():
                         type=str,
                         help="markdown parser: mmd=internal Multimarkdown, pandoc=pandoc, native=native")
 
-    parser.add_argument("-w", '--max-img-width',
-                        dest="max_img_width",
-                        default=320,
-                        type=int,
-                        help="maximum width of images")
     return parser
 
 
@@ -82,7 +77,6 @@ if __name__ == "__main__":
 
     converter = Zk2Setevi(home=bundle_dir, folder=args.input_folder, out_folder=args.output_folder,
                           bibfile=args.bibfile, extension=args.extension,
-                          linkstyle=args.linkstyle, parser=args.parser,
-                          max_img_width=args.max_img_width)
+                          linkstyle=args.linkstyle, parser=args.parser)
     converter.create_html()
 
