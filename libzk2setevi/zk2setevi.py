@@ -34,6 +34,14 @@ mmd_markdown('pyinstaller')
 available_parsers = {'native': native_markdown, 'pandoc': pandoc_markdown, 'mmd': mmd_markdown}
 
 
+def progress_callback(counter, count, msg):
+    print('\r{:4d} / {:4d} [{:3d}%] {}'.format(counter, count, int(counter / count * 100), msg), end='', flush=True)
+
+
+def finish_callback():
+    print()
+
+
 class Zk2Setevi:
     def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
                  parser=None, max_img_width=320):
@@ -289,7 +297,6 @@ class Zk2Setevi:
         """
         with open(img, 'rb') as f:
             head = f.read(24)
-            # print('head:\n', repr(head))
             if len(head) != 24:
                 return
             if imghdr.what(img) == 'png':
@@ -441,7 +448,7 @@ class Zk2Setevi:
         })
         return node_id
 
-    def create_all_tags_node(self):
+    def create_all_tags_node(self, progress_callback=progress_callback, finish_callback=finish_callback):
         # also create all tag notes
         node_id = self.next_id()
         rel_ids = []
@@ -451,8 +458,7 @@ class Zk2Setevi:
 
         for tag in sorted(self.tag_notes.keys()):
             i += 1
-            print('\r{:4d} / {:4d} [{:3d}%] Processing tag     {}'.format(i, num_tags, int(i / num_tags * 100), tag),
-                  end='', flush=True)
+            progress_callback(i, num_tags, 'Processing tag     {}'.format(tag))
             note_ids = self.tag_notes[tag]
             tag_node = self.json_tag_ids[tag]
             tag_rel_ids = []
@@ -467,13 +473,13 @@ class Zk2Setevi:
             })
             rel_id = self.create_relationship_node(node_id, tag_node)
             rel_ids.append(rel_id)
-        print()
         self.json_nodes.append({
             'dataNodeId': node_id,
             'name': '#tags',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
+        finish_callback()
         return node_id
 
     def create_all_notes_node(self):
@@ -492,7 +498,7 @@ class Zk2Setevi:
         })
         return node_id
 
-    def create_all_citations_node(self):
+    def create_all_citations_node(self, progress_callback=progress_callback, finish_callback=finish_callback):
         if self.bibfile is None:
             return
         citekeys = sorted(self.bib_citekeys)
@@ -505,19 +511,19 @@ class Zk2Setevi:
         for citekey in citekeys:
             i += 1
             if citekey in self.citing_notes:
-                print('\r{:4d} / {:4d} [{:3d}%] Processing citekey {}'.format(i, num_ck, int(i / num_ck * 100),
-                                                                              citekey), end='', flush=True)
+                progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
                 rel_id = self.create_relationship_node(node_id, self.json_citekey_ids[citekey])
                 rel_ids.append(rel_id)
         # make sure we report 100%
-        print('\r{:4d} / {:4d} [{:3d}%] Processing citekey {}'.format(i, num_ck, int(i / num_ck * 100),
-                                                                      citekey))
+        progress_callback(i, num_ck, 'Processing citekey {}'.format(citekey))
+
         self.json_nodes.append({
             'dataNodeId': node_id,
             'name': '@citations',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
+        finish_callback()
         return node_id
 
     def create_root_node(self):
@@ -537,19 +543,18 @@ class Zk2Setevi:
         })
         return root_id
 
-    def create_all_nodes(self):
+    def create_all_nodes(self, progress_callback=progress_callback, finish_callback=finish_callback):
         num_notes = len(self.note_titles.keys())
         i = 0
+        fmt = 'Processing note    {} {}                              '
         for note_id in sorted(self.note_titles.keys()):
             i += 1
             nice_title = self.note_titles[note_id]
             if len(nice_title) > 30:
                 nice_title = nice_title[:27] + '...'
-            print('\r{:4d} / {:4d} [{:3d}%] Processing note    {} {}'.format(i, num_notes, int(i / num_notes * 100),
-                                                                             note_id, nice_title),
-                  end='', flush=True)
+            progress_callback(i, num_notes, fmt.format(note_id, nice_title))
             self.create_nodes_from_note(note_id)
-        print()
+        finish_callback()
         root_id = self.create_root_node()
         return root_id
 
@@ -569,7 +574,6 @@ class Zk2Setevi:
         self.load_bibfile()
         self.find_all_notes_all_tags()
         self.enumerate_items()
-
 
         json_s = self.create_json()
         with open(os.path.join(self.home, 'data', 'setevi-template.html'), mode='r', encoding='utf-8',
