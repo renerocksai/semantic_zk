@@ -193,7 +193,9 @@ class Semantic_ZK(QWidget):
                 html = f.read()
                 self.html_view.setHtml(html)
         else:
-            self.html_view.load(QUrl('file://' + os.path.join(output_folder, 'out.html')))
+            url = 'file:///' + output_folder + '/out.html'
+            qurl = QUrl(url)
+            self.html_view.load(qurl)
 
     def on_zk_folder_clicked(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
