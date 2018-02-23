@@ -1,4 +1,4 @@
-# zk2setevi
+# zk2setevi - The Semantic Text View for your digital Zettelkasten
 
 Convert a Markdown Zettelkasten (check out [sublime_zk](https://github.com/renerocksai/sublime_zk), [Zettelkasten.de](https://zettelkasten.de)) 
 to a semantic text view HTML page (see [Setevi](http://felixbenzbaldas.de/setevi/)) that can be viewed with any decent modern browser, even on smartphones :sunglasses:.
