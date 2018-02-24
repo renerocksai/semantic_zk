@@ -587,6 +587,6 @@ class Zk2Setevi:
                 line = line.replace('/*GENERATED JSON*/', json_s)
             output_lines.append(line)
 
-        with open(os.path.join(self.out_folder, 'out.html'), mode='w', encoding='utf-8') as f:
+        with open(os.path.join(self.out_folder, 'index.html'), mode='w', encoding='utf-8') as f:
             for line in output_lines:
                 f.write(line)
