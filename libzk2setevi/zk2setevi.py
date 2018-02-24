@@ -494,7 +494,7 @@ class Zk2Setevi:
             rel_node_ids.append(rel_id)
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': 'notes',
+            'name': '[notes]',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_node_ids
         })
