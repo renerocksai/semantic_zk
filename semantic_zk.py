@@ -202,14 +202,9 @@ class Semantic_ZK(QWidget):
                                   linkstyle=linkstyle, parser=parser,
                                   progress_callback=self.progress_callback, finish_callback=self.finish_callback)
             converter.create_html()
-            if False:
-                with open(os.path.join(output_folder, 'out.html'), mode='r', encoding='utf-8', errors='ignore') as f:
-                    html = f.read()
-                    self.html_view.setHtml(html)
-            else:
-                url = 'file:///' + output_folder + '/out.html'
-                qurl = QUrl(url)
-                self.html_view.load(qurl)
+            url = 'file:///' + output_folder + '/index.html'
+            qurl = QUrl(url)
+            self.html_view.load(qurl)
         except Exception as e:
             mb = QMessageBox()
             mb.setIcon(QMessageBox.Critical)
