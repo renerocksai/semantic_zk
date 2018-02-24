@@ -384,6 +384,8 @@ class Zk2Setevi:
                                                 '12px;">&nbsp; <b>Links:</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
             for note_id in [self.cut_after_note_id(x) for x in linked_note_ids]:
+                if note_id not in self.json_note_ids:
+                    continue
                 rel_id = self.create_note_link_node(note_id, para_id)
                 rel_ids.append(rel_id)
             if linked_note_ids:
