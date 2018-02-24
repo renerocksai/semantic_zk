@@ -24,5 +24,4 @@ The resulting semantic text view features:
     * Are displayed in the @citations overview but also after each paragraph that contains citations.
     * Clicking on a cite key shows the citation's source and also a list of links to notes that also cite that source
 
-See the semantic text view in action in the [[201802241939]] Screen-Shots gallery.
 

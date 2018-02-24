@@ -1,7 +1,7 @@
 # 201802241913 zk2setevi - The Semantic Text View for your Zettelkasten
 tags = #start #setevi #zettelkasten #0-start
 
-![gui](img/first_gui.png)
+<img src="https://renerocksai.github.io/semantic_zk/imgs/first_gui.png" style="max-width:100%;">
 
 This is a tool to convert a Markdown Zettelkasten (see [Zettelkasten.de](https://zettelkasten.de)) into a semantic text view HTML page (see [Setevi](http://felixbenzbaldas.de/setevi/)) that can be viewed with any decent modern browser, even on smartphones :-). #mobile #android
 
