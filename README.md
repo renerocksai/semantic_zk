@@ -28,6 +28,11 @@ The resulting semantic text view features:
     * Are displayed in the @citations overview but also after each paragraph that contains citations.
     * Clicking on a cite key shows the citation's source and also a list of links to notes that also cite that source
     
+# See it in action!
+
+Semantic_ZK is documented in Zettelkasten style and has converted its own documentation :smile:.
+
+See it in action [here](https://renerocksai.github.io/semantic_zk/)!
 
 # ~~~ Under construction ~~~
 
