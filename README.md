@@ -1,5 +1,7 @@
 # zk2setevi - The Semantic Text View for your digital Zettelkasten
 
+![gui](img/first_gui.png)
+
 Convert a Markdown Zettelkasten (check out [sublime_zk](https://github.com/renerocksai/sublime_zk), [Zettelkasten.de](https://zettelkasten.de)) 
 to a semantic text view HTML page (see [Setevi](http://felixbenzbaldas.de/setevi/)) that can be viewed with any decent modern browser, even on smartphones :sunglasses:.
 
@@ -29,8 +31,6 @@ The resulting semantic text view features:
 
 # ~~~ Under construction ~~~
 
-I'm in the process of putting everything together. There is no graphical tool yet (only command line tool) and there are no releases yet. But they'll be up very very soon.
-
 Better documentation is also in the queue, but for now:
 
 * [Installation](#installation)
@@ -45,7 +45,10 @@ You'll need [pandoc](https://pandoc.org/installing.html) installed (creates cita
 
 ## Binary distribution
 
-The [releases](https://https://github.com/renerocksai/zk2setevi/releases) section of the GitHub repository provides binary downloads for up-to-date versions of both Windows 10 and macOs. Each distribution contains both the [command line tool](#command-line-tool) and the [graphical tool](#graphical-tool). There is no installer, the binaries are useable immediately after download.
+The [releases](https://https://github.com/renerocksai/zk2setevi/releases) section of the GitHub repository provides binary downloads for up-to-date versions of both Windows 10 and macOs. Each distribution contains both the [command line tool](#command-line-tool) and the [graphical tool](#graphical-tool). 
+
+There is no installer, the binaries are useable immediately after download and unzipping.
+
 
 After installing, go straight to [usage](#usage
 )
@@ -62,44 +65,23 @@ You'll need:
     * pymmd
     * markdown
     * pygments
+    * PyQt5
 
-For the [graphical tool](#graphical-tool) you'll also need the following modules:
 
-* PySide
-
-To create standalone executables, you'll also need the following module:
-
-* pyinstaller
 
 ### Execution
 
-The [command line tool](#command-line-tool) can be executed like this:
+The [command line tool](#command-line-tool) `zk2setevi` can be executed like this:
 
 ```bash
 python zk2setevi.py arguments # (see below)
 
 ```
 
-The [graphical tool](#graphical-tool) can be executed like this:
+The [graphical tool](#graphical-tool)`semantic_zk` can be executed like this:
 
 ```bash
-python zkexport.py
-```
-
-### Creating standalone executables
-
-* macOS: `./make_exe.sh`
-* win10: `make_exe.cmd`
-
-Then check the `dist` folder.
-
-Note that you'll need a pathched version of `pymmd` for win10:
-
-
-```python
-
-# TODO: patch goes here
-
+python semantic_zk.py
 ```
 
 
@@ -132,10 +114,28 @@ The only exception is: If your text contains pandoc style tables, then go for th
 
 ## Command Line Tool
 
+The command line tool is named `zk2setevi`.
+
+Due to reasonable defaults, a typical invocation looks like this:
+
 ```bash
-usage: zk2setevi.py [-h] [-b FILE] [-e EXTENSION] [-l {single,double,§}]
-                    [-p PARSER] [-w MAX_IMG_WIDTH]
-                    input_folder output_folder
+./zk2setevi /path/to/zettelkasten /path/to/output_directory
+```
+
+**Note:** The output directory must already exist. 
+
+If you want to use the `pandoc` parser, type
+
+```bash
+./zk2setevi /path/to/zettelkasten /path/to/output_directory -p pandoc
+```
+
+The full list of available options is displayed on the usage screen:
+
+```bash
+usage: zk2setevi [-h] [-b FILE] [-e EXTENSION] [-l {single,double,§}]
+                 [-p PARSER] [-w MAX_IMG_WIDTH]
+                 input_folder output_folder
 
 Convert a Zettelkasten into a Setevi HTML page
 
@@ -160,9 +160,32 @@ optional arguments:
 
 ## Graphical Tool
 
-```python
-# TODO: write this
-```
+The Graphical tool `semantic_zk` is pretty self-explanatory:
+
+![](img/gui-annotated.png)
+
+The typical workflow is:
+
+* 1: Select Zettelkasten folder
+* 2: Select Output folder
+* 7: Convert
+
+When the conversion is finished, the generated HTML will be rendered on the right half of the window.
+
+Once you close the program, you can always just open the HTML in a browser from your chosen output folder, to see it again.
+
+The optional steps are:
+
+* (3): Select a `.bib` file if there is none in your Zettelkasten folder or if you want to override it.
+* (4): Enter the filename extension of your markdown files if it differs from `.md`, for example `.mdown` or `.txt`.
+* (5): Select the link style format that should be used in the HTML output. 
+    * Default is `[double` for `[[double bracket links]]` 
+    * `single` stands for `[single bracket links]`
+    * `§` selects `§201802240300` old school links 
+* (6): select a markdown parser. See [above](#about-the-available-parsers) for a comparison:
+    * Default is `mmd`, the Multimarkdown parser
+    * `pandoc` stands for the Pandoc parser
+    * `native` selects the native parser
 
 
 # Screenshots of a Semantic Text View
