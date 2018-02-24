@@ -192,7 +192,7 @@ The optional steps are:
 
 ## From something like this:
 
-![fimg](img/zettelkasten.png)
+![fimg](img/zk_example.png)
 
 ## To:
 
