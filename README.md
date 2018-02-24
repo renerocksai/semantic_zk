@@ -210,6 +210,10 @@ The optional steps are:
 
 ![rimg](img/pandoc-tables.png)
 
+## Expanding Note Links
+
+[](img/note_links.gif)
+
 ## Open citation and code block in note
 ![nimg](img/pandoc-code.png)
 
