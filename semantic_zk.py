@@ -5,6 +5,16 @@ from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout
                             QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from libzk2setevi.zk2setevi import Zk2Setevi
+import traceback
+from subprocess import Popen, PIPE
+
+# fix path on macos
+if sys.platform == 'darwin':
+    p = Popen('bash -l -c \'echo $PATH\'', stdout=PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    # make me windows-safe
+    stdout = stdout.decode('utf-8')
+    os.environ['PATH'] = stdout
 
 
 class Semantic_ZK(QWidget):
@@ -12,7 +22,6 @@ class Semantic_ZK(QWidget):
         super().__init__()
         self.linkstyle_list = ['single', 'double', '§']
         self.parser_list = ['native', 'mmd', 'pandoc']
-
         main_split = QSplitter(Qt.Horizontal)
 
         # Left Side
@@ -187,20 +196,28 @@ class Semantic_ZK(QWidget):
         else:
             # we are running in a normal Python environment
             bundle_dir = os.path.dirname(os.path.abspath(__file__))
-
-        converter = Zk2Setevi(home=bundle_dir, folder=zk_folder, out_folder=output_folder,
-                              bibfile=bibfile, extension=extension,
-                              linkstyle=linkstyle, parser=parser,
-                              progress_callback=self.progress_callback, finish_callback=self.finish_callback)
-        converter.create_html()
-        if False:
-            with open(os.path.join(output_folder, 'out.html'), mode='r', encoding='utf-8', errors='ignore') as f:
-                html = f.read()
-                self.html_view.setHtml(html)
-        else:
-            url = 'file:///' + output_folder + '/out.html'
-            qurl = QUrl(url)
-            self.html_view.load(qurl)
+        try:
+            converter = Zk2Setevi(home=bundle_dir, folder=zk_folder, out_folder=output_folder,
+                                  bibfile=bibfile, extension=extension,
+                                  linkstyle=linkstyle, parser=parser,
+                                  progress_callback=self.progress_callback, finish_callback=self.finish_callback)
+            converter.create_html()
+            if False:
+                with open(os.path.join(output_folder, 'out.html'), mode='r', encoding='utf-8', errors='ignore') as f:
+                    html = f.read()
+                    self.html_view.setHtml(html)
+            else:
+                url = 'file:///' + output_folder + '/out.html'
+                qurl = QUrl(url)
+                self.html_view.load(qurl)
+        except Exception as e:
+            mb = QMessageBox()
+            mb.setIcon(QMessageBox.Critical)
+            mb.setWindowTitle('Error')
+            mb.setText('Exception caught:')
+            mb.setDetailedText(str(e) + '\n' + traceback.format_exc())
+            mb.setStandardButtons(QMessageBox.Ok)
+            mb.exec_()
 
     def on_zk_folder_clicked(self):
         file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
