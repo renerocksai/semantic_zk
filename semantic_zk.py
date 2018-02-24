@@ -1,9 +1,9 @@
 import sys
 import os
-from PyQt5.Qt import  QUrl, Qt
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.Qt import QUrl, Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QSplitter, QFrame, \
                             QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox
+from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from libzk2setevi.zk2setevi import Zk2Setevi
 
 
@@ -109,7 +109,7 @@ class Semantic_ZK(QWidget):
         left_vlay.addLayout(info_hlay)
 
         # HTML view
-        self.html_view = QWebEngineView()
+        self.html_view = QWebView()
         self.html_view.setHtml('<center><h2>Preview</h2></center>')
 
         # Add to splitter
@@ -178,7 +178,12 @@ class Semantic_ZK(QWidget):
         # try to find out our home
         if getattr(sys, 'frozen', False):
             # we are running in a bundle
-            bundle_dir = sys._MEIPASS
+            if sys.platform == 'darwin':
+                # cx_freeze
+                bundle_dir = os.path.dirname(sys.executable)
+            else:
+                # pyinstaller
+                bundle_dir = sys._MEIPASS
         else:
             # we are running in a normal Python environment
             bundle_dir = os.path.dirname(os.path.abspath(__file__))
@@ -236,4 +241,5 @@ if __name__ == '__main__':
     mainwindow.show()
     mainwindow.setFocus()
     app.exec_()
+
 
