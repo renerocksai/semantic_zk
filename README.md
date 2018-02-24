@@ -208,14 +208,11 @@ The optional steps are:
 
 ## Notes:
 
-![img](img/just_noting.png)
+![rimg](img/pandoc-tables.png)
 
 ## Open citation and code block in note
 ![nimg](img/pandoc-code.png)
 
-## Tables
-
-![rimg](img/pandoc-tables.png)
 
 ## Images :-)
 
