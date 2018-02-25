@@ -220,14 +220,6 @@ The optional steps are:
 
 ![](img/note_links.gif)
 
-## Open citation and code block in note
-![nimg](img/pandoc-code.png)
-
-
-## Images :-)
-
-![](img/imgs.png)
-
 ## Zettelkasten on Android :sunglasses:
 
 ![](img/android_screenshot.png)

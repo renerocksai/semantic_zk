@@ -1,7 +1,5 @@
-from cx_Freeze import setup,Executable
-import os
-import sys
-
+from cx_Freeze import setup, Executable
+from bundle_version import version
 
 
 includes = ["atexit","PyQt5.QtCore", "PyQt5.Qt", "PyQt5.QtGui", "PyQt5.QtWidgets",
@@ -220,7 +218,7 @@ semantic_zk = Executable(
 
 setup(
       name = "semantic_zk",
-      version = "0.3",
+      version = version,
       author = 'Rene Schallner',
       description = "Semantic_ZK",
       options = {"build_exe": build_exe_options},

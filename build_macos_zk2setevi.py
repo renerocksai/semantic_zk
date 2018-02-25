@@ -1,4 +1,5 @@
-from cx_Freeze import setup,Executable
+from cx_Freeze import setup, Executable
+from bundle_version import version
 
 
 includes = ["atexit", "libzk2setevi",
@@ -225,7 +226,7 @@ semantic_zk = Executable(
 
 setup(
       name = "zk2setevi",
-      version = "0.3",
+      version = version,
       author = 'Rene Schallner',
       description = "Convert Zettelkasten to Setevi",
       options = {"build_exe": build_exe_options},
