@@ -3,7 +3,7 @@ tags = #graphical #usage #gui
 
 The Graphical tool `semantic_zk` is pretty self-explanatory:
 
-<img src="https://renerocksai.github.io/semantic_zk/imgs/gui-annotated.png" style="max-width:100%;">
+![Semantic_ZK GUI](img/gui-annotated.png)
 
 The typical workflow is:
 

@@ -93,6 +93,17 @@ class Semantic_ZK(QWidget):
         left_vlay.addStretch(1)
         left_vlay.addWidget(sep)
 
+        # remote URL
+        baseurl_lbl = QLabel('Optional remote URL:')
+        baseurl_ed = QLineEdit()
+        left_vlay.addWidget(baseurl_lbl)
+        left_vlay.addWidget(baseurl_ed)
+
+        # Separator
+        sep = self.hline()
+        left_vlay.addStretch(1)
+        left_vlay.addWidget(sep)
+
         # Convert Button
         convert_hlay = QHBoxLayout()
         convert_bt = QPushButton('Convert!')
@@ -139,6 +150,7 @@ class Semantic_ZK(QWidget):
         self.ed_extension = ext_ed
         self.sel_linkstyle = lstyle_choice
         self.sel_parser = parser_choice
+        self.ed_baseurl = baseurl_ed
 
         # Connections
         convert_bt.clicked.connect(self.on_convert_clicked)
@@ -183,6 +195,8 @@ class Semantic_ZK(QWidget):
         output_folder = self.ed_output_folder.text()
         linkstyle = self.linkstyle_list[self.sel_linkstyle.currentIndex()]
         parser = self.parser_list[self.sel_parser.currentIndex()]
+        baseurl = self.ed_baseurl.text()
+
         # try to find out our home
         if getattr(sys, 'frozen', False):
             # we are running in a bundle
@@ -199,7 +213,8 @@ class Semantic_ZK(QWidget):
             converter = Zk2Setevi(home=bundle_dir, folder=zk_folder, out_folder=output_folder,
                                   bibfile=bibfile, extension=extension,
                                   linkstyle=linkstyle, parser=parser,
-                                  progress_callback=self.progress_callback, finish_callback=self.finish_callback)
+                                  progress_callback=self.progress_callback, finish_callback=self.finish_callback,
+                                  base_url=baseurl)
             converter.create_html()
             url = 'file:///' + output_folder + '/index.html'
             qurl = QUrl(url)

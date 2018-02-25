@@ -45,7 +45,8 @@ def finish_callback():
 
 class Zk2Setevi:
     def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
-                 parser=None, max_img_width=320, progress_callback=progress_callback, finish_callback=finish_callback):
+                 parser=None, max_img_width=320, progress_callback=progress_callback, finish_callback=finish_callback,
+                 base_url=None):
         if folder is None:
             raise RuntimeError('no ZK folder')
         if out_folder is None:
@@ -55,6 +56,10 @@ class Zk2Setevi:
         self.out_folder = out_folder
         self.img_folder_rel = 'imgs'
         self.img_folder = os.path.join(out_folder, self.img_folder_rel)
+        self.base_url = base_url
+        if self.base_url.endswith('/'):
+            self.base_url = self.base_url[:-1]
+
         os.makedirs(self.img_folder, exist_ok=True)
         self.folder = folder
         self.extension = extension
@@ -266,7 +271,12 @@ class Zk2Setevi:
                     if not size:
                         print('\nError: unknown image format:', source_path)
                         continue
+
                     dest_rel_path = os.path.join(self.img_folder_rel, os.path.basename(path))
+                    if self.base_url:
+                        dest_rel_path = '{}/{}/{}'.format(self.base_url, self.img_folder_rel, os.path.basename(path))
+                        dest_path = dest_rel_path
+
                     w, h = size
                     max_width = self.max_img_width
                     if w > max_width:
@@ -277,16 +287,14 @@ class Zk2Setevi:
 
                     # now replace link
                     orig_markdown = pre + path + post + opt
-                    dest_markdown = pre + dest_rel_path
-                    if 'width' not in path and 'height' not in path:
-                        alt_text = re.findall('(\[.*\])', pre)
-                        if alt_text:
-                            alt_text = alt_text[0]
-                        else:
-                            alt_text = ''
-                        dest_markdown = '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-width:100%;"' \
-                                        ' max-height="50%"><p>{}</p></a>'.format(dest_rel_path, dest_path, alt_text,
-                                                                                 alt_text[1:-1])
+                    alt_text = re.findall('(\[.*\])', pre)
+                    if alt_text:
+                        alt_text = alt_text[0]
+                    else:
+                        alt_text = ''
+                    dest_markdown = '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-width:100%;"' \
+                                    ' max-height="50%"><p>{}</p></a>'.format(dest_rel_path, dest_path, alt_text,
+                                                                             alt_text[1:-1])
                     new_text = new_text.replace(orig_markdown, dest_markdown)
         return new_text
 

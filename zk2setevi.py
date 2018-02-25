@@ -57,6 +57,10 @@ def get_parser():
                         type=str,
                         help="markdown parser: mmd=internal Multimarkdown, pandoc=pandoc, native=native")
 
+    parser.add_argument("-u", '--url',
+                        dest="baseurl",
+                        type=str,
+                        help="Remote URL the HTML should be built for")
     return parser
 
 
@@ -82,6 +86,6 @@ if __name__ == "__main__":
 
     converter = Zk2Setevi(home=bundle_dir, folder=args.input_folder, out_folder=args.output_folder,
                           bibfile=args.bibfile, extension=args.extension,
-                          linkstyle=args.linkstyle, parser=args.parser)
+                          linkstyle=args.linkstyle, parser=args.parser, base_url=args.baseurl)
     converter.create_html()
 
