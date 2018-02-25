@@ -27,7 +27,7 @@ See the [README](https://github.com/renerocksai/semantic_zk#zk2setevi---the-sema
         * `semantic_zk.exe` (graphical tool)
 '''.format(version=version, prefix=prefix)
 
-# for bash scripts
+# for bash scripts and windows .cmd
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
@@ -37,5 +37,12 @@ if __name__ == '__main__':
             print(prefix)
         elif sys.argv[1].lower() == '--release-notes':
             print(release_notes)
+        elif sys.argv[1].lower() == '--tag':
+            print('semantic_zk-{}-{}'.format(prefix, version))
+        elif sys.argv[1].lower() == '--rename-dist':
+            import os
+            src = 'dist'
+            dest = 'semantic_zk-{prefix}-{version}-win10'.format(version=version, prefix=prefix)
+            os.rename(src, dest)
     else:
         print(version, prefix)
