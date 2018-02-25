@@ -65,28 +65,27 @@ def get_parser():
     return parser
 
 
-if __name__ == "__main__":
-    argparser = get_parser()
-    if len(sys.argv) == 1:
-        argparser.print_help()
-        sys.exit()
-    args = get_parser().parse_args()
+argparser = get_parser()
+if len(sys.argv) == 1:
+    argparser.print_help()
+    sys.exit()
+args = get_parser().parse_args()
 
-    # try to find out our home
-    if getattr(sys, 'frozen', False):
-        # we are running in a bundle
-        if sys.platform == 'darwin':
-            # cx_freeze
-            bundle_dir = os.path.dirname(sys.executable)
-        else:
-            # pyinstaller
-            bundle_dir = sys._MEIPASS
+# try to find out our home
+if getattr(sys, 'frozen', False):
+    # we are running in a bundle
+    if sys.platform == 'darwin':
+        # cx_freeze
+        bundle_dir = os.path.dirname(sys.executable)
     else:
-        # we are running in a normal Python environment
-        bundle_dir = os.path.dirname(os.path.abspath(__file__))
+        # pyinstaller
+        bundle_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-    converter = Zk2Setevi(home=bundle_dir, folder=args.input_folder, out_folder=args.output_folder,
-                          bibfile=args.bibfile, extension=args.extension,
-                          linkstyle=args.linkstyle, parser=args.parser, base_url=args.baseurl)
-    converter.create_html()
+converter = Zk2Setevi(home=bundle_dir, folder=args.input_folder, out_folder=args.output_folder,
+                      bibfile=args.bibfile, extension=args.extension,
+                      linkstyle=args.linkstyle, parser=args.parser, base_url=args.baseurl)
+converter.create_html()
 

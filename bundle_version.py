@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+DEPLOY_DIR = '_deploy'
 
 version = '0.4'
 prefix = 'pre'
@@ -39,6 +40,14 @@ if __name__ == '__main__':
             print(release_notes)
         elif sys.argv[1].lower() == '--tag':
             print('semantic_zk-{}-{}'.format(prefix, version))
+        elif sys.argv[1].lower() == '--init':
+            import os
+            import shutil
+            if os.path.exists(DEPLOY_DIR):
+                shutil.rmtree(DEPLOY_DIR)
+            os.makedirs(DEPLOY_DIR)
+        elif sys.argv[1].lower() == '--deploy-dir':
+            print(DEPLOY_DIR)
         elif sys.argv[1].lower() == '--rename-dist':
             import os
             # effing windows is sloooow
@@ -46,6 +55,6 @@ if __name__ == '__main__':
             time.sleep(3)
             src = 'dist'
             dest = 'semantic_zk-{prefix}-{version}-win10'.format(version=version, prefix=prefix)
-            os.rename(src, dest)
+            os.rename(src, os.path.join(DEPLOY_DIR, dest))
     else:
         print(version, prefix)

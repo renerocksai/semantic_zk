@@ -3,18 +3,17 @@
 VERSION=$(python bundle_version.py --version)
 PREFIX=$(python bundle_version.py --prefix)
 
-DEBUG=
-
-$DEBUG rm -fr build/
+python bundle_version.py --init
+DEPLOY_BASE=$(python bundle_version.py --deploy-dir)
 
 # cx_Freeze approach
-$DEBUG python build_macos_zk2setevi.py build 2>&1  |tee build-zk2setevi-${PREFIX}-${VERSION}.log
-$DEBUG python build_macos_semantic_zk.py bdist_mac 2>&1  |tee build-semantic_zk-${PREFIX}-${VERSION}.log
-$DEBUG cp -v Info.plist build/semantic_zk-${VERSION}.app/Contents/
 
 # command line tool
+rm -fr build/
+python build_macos_zk2setevi.py build 2>&1  |tee build-zk2setevi-${PREFIX}-${VERSION}.log
+
 ORIG_DIR=$(echo build/exe.macos*)
-DEPLOY_DIR=build/semantic_zk-${PREFIX}-${VERSION}-macOS
+DEPLOY_DIR=${DEPLOY_BASE}/semantic_zk-${PREFIX}-${VERSION}-macOS
 DEST=${DEPLOY_DIR}/commandline
 
 mkdir -p ${DEPLOY_DIR}
@@ -22,8 +21,11 @@ mv ${ORIG_DIR} ${DEPLOY_DIR}
 mv ${DEPLOY_DIR}/$(basename ${ORIG_DIR}) ${DEST}
 
 # GUI
+rm -fr build/
+python build_macos_semantic_zk.py bdist_mac 2>&1  |tee build-semantic_zk-${PREFIX}-${VERSION}.log
+cp -v Info.plist build/semantic_zk-${VERSION}.app/Contents/
 mv -v build/semantic_zk-${VERSION}.app ${DEPLOY_DIR}/
-
+rm -fr build/
 
 # pyinstaller doesn't work with PyQt5 on macOS
 
