@@ -5,7 +5,7 @@ The full list of available options is displayed on the usage screen:
 
 ```bash
 usage: zk2setevi [-h] [-b FILE] [-e EXTENSION] [-l {single,double,§}]
-                 [-p PARSER] [-w MAX_IMG_WIDTH]
+                 [-p PARSER] [-u BASEURL]
                  input_folder output_folder
 
 Convert a Zettelkasten into a Setevi HTML page
@@ -27,4 +27,6 @@ optional arguments:
   -p PARSER, --parser PARSER
                         markdown parser: mmd=internal Multimarkdown,
                         pandoc=pandoc, native=native (default: mmd)
+  -u BASEURL, --url BASEURL
+                        Remote URL the HTML should be built for (default: )
 ```
