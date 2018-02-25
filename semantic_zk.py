@@ -146,7 +146,6 @@ class Semantic_ZK(QWidget):
         out_bt_folder.clicked.connect(self.on_output_folder_clicked)
         bib_bt.clicked.connect(self.on_bibfile_clicked)
 
-
     def on_convert_clicked(self):
         bibfile = None
         error_lines = []
