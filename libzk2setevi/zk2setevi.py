@@ -106,6 +106,8 @@ class Zk2Setevi:
         self.json_id_counter = -1
         self.json_nodes = []
 
+        self.vertical_layout = True
+
     def next_id(self):
         self.json_id_counter += 1
         return self.json_id_counter
@@ -371,12 +373,16 @@ class Zk2Setevi:
                 tag_id = self.json_tag_ids[tag]
                 rel_id = self.create_relationship_node(node_id, tag_id)
                 rel_ids.append(rel_id)
-            # append a separator
-            para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'
-                                            + '&nbsp;' * 60 + '</div>', raw=True)
-            rel_ids.append(self.create_relationship_node(node_id, para_id))
+
+            if not self.vertical_layout:
+                # append a separator
+                para_id = self.create_text_node('<div style="  color: purple"> &nbsp; <b></b> &nbsp;'
+                                                + '&nbsp;' * 60 + '</div>', raw=True)
+                rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         for para in paras:
+            if para == '':
+                continue
             para_rel_ids = []
             linked_note_ids = ZkConstants.Link_Matcher.findall(para)
             linked_note_ids = [l[1] for l in linked_note_ids]
@@ -396,11 +402,16 @@ class Zk2Setevi:
                     continue
                 rel_id = self.create_note_link_node(note_id, para_id)
                 rel_ids.append(rel_id)
+
             if linked_note_ids:
-                # append a separator
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
-                                                ' <b>▪</b> &nbsp;</div>', raw=True)
-                rel_ids.append(self.create_relationship_node(node_id, para_id))
+                    # append a separator
+                    if self.vertical_layout:
+                        para_id = self.create_text_node('<div style="background-color: lightgray; color: purple; font-size:3px">&nbsp;'
+                                                        ' &nbsp;</div>', raw=True)
+                    else:
+                        para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
+                                                        ' <b>▪</b> &nbsp;</div>', raw=True)
+                    rel_ids.append(self.create_relationship_node(node_id, para_id))
 
             if is_code_block:
                 # no citekeys in raw html
@@ -419,8 +430,13 @@ class Zk2Setevi:
                 rel_ids.append(rel_id)
             if citekeys:
                 # append a separator
-                para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp; '
-                                                '<b>▪</b> &nbsp;</div>', raw=True)
+                if self.vertical_layout:
+                    para_id = self.create_text_node(
+                        '<div style="background-color: lightgray; color: purple; font-size:3px">&nbsp;'
+                        ' &nbsp;</div>', raw=True)
+                else:
+                    para_id = self.create_text_node('<div style="background-color: lightgray; color: purple">&nbsp;'
+                                                    ' <b>▪</b> &nbsp;</div>', raw=True)
                 rel_ids.append(self.create_relationship_node(node_id, para_id))
 
         # embed the chunks into a note node
@@ -485,7 +501,7 @@ class Zk2Setevi:
             rel_ids.append(rel_id)
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': '#tags',
+            'name': '<div style="color: purple">#tags</div>',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
@@ -502,7 +518,7 @@ class Zk2Setevi:
             rel_node_ids.append(rel_id)
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': '[notes]',
+            'name': '<div style="color: blue">[notes]</div>',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_node_ids
         })
@@ -529,7 +545,7 @@ class Zk2Setevi:
 
         self.json_nodes.append({
             'dataNodeId': node_id,
-            'name': '@citations',
+            'name': '<div style="color: green">@citations</div>',
             'classAttr': 'SimpleDataNode',
             'relationships': rel_ids
         })
