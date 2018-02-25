@@ -2,7 +2,7 @@ from cx_Freeze import setup, Executable
 from bundle_version import version
 
 
-includes = ["atexit", "libzk2setevi",
+includes = ["atexit", "libzk2setevi", "libzk2setevi.__init__", "libzk2setevi.bibstuff", "libzk2setevi.convert", "libzk2setevi.zkutils",
             "pygments",
             "pygments",
             "pygments.formatters._mapping",
@@ -218,11 +218,6 @@ zk2setevi = Executable(
       initScript = None,
     )
 
-semantic_zk = Executable(
-      script="semantic_zk.py",
-      initScript = None,
-)
-
 
 setup(
       name = "zk2setevi",
@@ -230,5 +225,5 @@ setup(
       author = 'Rene Schallner',
       description = "Convert Zettelkasten to Setevi",
       options = {"build_exe": build_exe_options},
-      executables = [zk2setevi, semantic_zk]
+      executables = [zk2setevi]
 )

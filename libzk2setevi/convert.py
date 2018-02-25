@@ -3,7 +3,6 @@
 
 from .zkutils import *
 from .bibstuff import Autobib
-import sys
 import os
 from collections import defaultdict
 import markdown as md

@@ -4,7 +4,7 @@ from PyQt5.Qt import QUrl, Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QSplitter, QFrame, \
                             QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
-from libzk2setevi.zk2setevi import Zk2Setevi
+from libzk2setevi.convert import Zk2Setevi
 import traceback
 from subprocess import Popen, PIPE
 

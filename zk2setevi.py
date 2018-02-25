@@ -5,7 +5,7 @@
 
 import os
 import sys
-from libzk2setevi.zk2setevi import Zk2Setevi
+from libzk2setevi.convert import Zk2Setevi
 
 
 def is_valid_file(parser, arg):
@@ -60,6 +60,7 @@ def get_parser():
     parser.add_argument("-u", '--url',
                         dest="baseurl",
                         type=str,
+                        default='',
                         help="Remote URL the HTML should be built for")
     return parser
 
