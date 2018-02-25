@@ -225,7 +225,7 @@ semantic_zk = Executable(
 
 setup(
       name = "zk2setevi",
-      version = "0.1",
+      version = "0.3",
       author = 'Rene Schallner',
       description = "Convert Zettelkasten to Setevi",
       options = {"build_exe": build_exe_options},

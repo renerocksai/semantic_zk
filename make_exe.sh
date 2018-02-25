@@ -3,7 +3,7 @@
 # cx_Freeze approach
 python build_macos_zk2setevi.py build 2>&1  |tee build-zk2setevi.log
 python build_macos_semantic_zk.py bdist_mac 2>&1  |tee build-semantic_zk.log
-cp -v Info.plist build/semantic_zk-0.1.app/Contents/
+cp -v Info.plist build/semantic_zk-0.3.app/Contents/
 
 # pyinstaller doesn't work with PyQt5 on macOS
 

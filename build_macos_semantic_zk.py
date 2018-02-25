@@ -220,7 +220,7 @@ semantic_zk = Executable(
 
 setup(
       name = "semantic_zk",
-      version = "0.1",
+      version = "0.3",
       author = 'Rene Schallner',
       description = "Semantic_ZK",
       options = {"build_exe": build_exe_options},
