@@ -46,7 +46,7 @@ def finish_callback():
 class Zk2Setevi:
     def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
                  parser=None, max_img_width=320, progress_callback=progress_callback, finish_callback=finish_callback,
-                 base_url=None):
+                 base_url=''):
         if folder is None:
             raise RuntimeError('no ZK folder')
         if out_folder is None:

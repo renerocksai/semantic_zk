@@ -22,7 +22,7 @@ mv ${ORIG_DIR} ${DEPLOY_DIR}
 mv ${DEPLOY_DIR}/$(basename ${ORIG_DIR}) ${DEST}
 
 # GUI
-mv -v build/build/semantic_zk-${VERSION}.app ${DEPLOY_DIR}/
+mv -v build/semantic_zk-${VERSION}.app ${DEPLOY_DIR}/
 
 
 # pyinstaller doesn't work with PyQt5 on macOS
