@@ -1,4 +1,4 @@
-# zk2setevi - The Semantic Text View for your Zettelkasten
+# Semantic_ZK - The Semantic Text View for your Zettelkasten
 
 ![gui](img/gui.png)
 
