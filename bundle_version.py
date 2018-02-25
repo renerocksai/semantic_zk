@@ -41,6 +41,9 @@ if __name__ == '__main__':
             print('semantic_zk-{}-{}'.format(prefix, version))
         elif sys.argv[1].lower() == '--rename-dist':
             import os
+            # effing windows is sloooow
+            import time
+            time.sleep(3)
             src = 'dist'
             dest = 'semantic_zk-{prefix}-{version}-win10'.format(version=version, prefix=prefix)
             os.rename(src, dest)
