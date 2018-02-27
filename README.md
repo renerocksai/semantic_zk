@@ -121,6 +121,8 @@ The only exception is: If your text contains pandoc style tables, then go for th
 
 The command line tool is named `zk2setevi`.
 
+### Default Conversion
+
 Due to reasonable defaults, a typical invocation looks like this:
 
 ```bash
@@ -135,12 +137,22 @@ If you want to use the `pandoc` parser, type
 ./zk2setevi /path/to/zettelkasten /path/to/output_directory -p pandoc
 ```
 
+### Note Filtering
+
+If you only want to convert parts of your Zettelkasten, this tool supports the following filters that can be **combined** as you please:
+
+* only notes from a given date or older
+* only notes up to a given date but not older
+* only notes containing certain tags
+* never notes containing certain tags
+
 The full list of available options is displayed on the usage screen:
 
 ```bash
-usage: zk2setevi [-h] [-b FILE] [-e EXTENSION] [-l {single,double,§}]
-                 [-p PARSER] [-u BASEURL]
-                 input_folder output_folder
+usage: zk2setevi    [-h] [-b FILE] [-e EXTENSION] [-l {single,double,§}]
+                    [-p PARSER] [-u BASEURL] [--from FROM] [--to TO]
+                    [--only-tags ONLY_TAGLIST] [--never-tags NEVER_TAGLIST]
+                    input_folder output_folder
 
 Convert a Zettelkasten into a Setevi HTML page
 
@@ -163,19 +175,45 @@ optional arguments:
                         pandoc=pandoc, native=native (default: mmd)
   -u BASEURL, --url BASEURL
                         Remote URL the HTML should be built for (default: )
+  --from FROM           (optionally abbreviated) timestamp from: include only
+                        notes that are not younger than FROM (default:
+                        19000101)
+  --to TO               (optionally abbreviated) timestamp to: include only
+                        notes that are not older than TO (default: 22001231)
+  --only-tags ONLY_TAGLIST
+                        only include notes tagged with tags from ONLY_TAGLIST
+                        (default: )
+  --never-tags NEVER_TAGLIST
+                        never include notes tagged with tags from ONLY_TAGLIST
+                        (default: )
 ```
+
+### Example:
+
+```bash
+docs_zk docs --only-tags='#setevi #zettelkasten' --never-tags=#start \
+             --from 20180224 --to=20180225 
+```
+
+* convert the `docs_zk` folder
+* write output to the `docs` folder
+* only consider notes tagged with either `#setevi` or `#zettelkasten`
+* never consider notes tagged with `#start`
+* only consider notes from 2018-02-24 to 2018-02-25 (incl.)
+
+
 
 ## Graphical Tool
 
 The Graphical tool `semantic_zk` is pretty self-explanatory:
 
-![](img/gui-annotated.png)
+![](img/gui_filters_annotated.png)
 
 The typical workflow is:
 
 * 1: Select Zettelkasten folder
 * 2: Select Output folder
-* 8: Convert
+* 12: Convert
 
 When the conversion is finished, the generated HTML will be rendered on the right half of the window.
 
@@ -193,8 +231,11 @@ The optional steps are:
     * Default is `mmd`, the Multimarkdown parser
     * `pandoc` stands for the Pandoc parser
     * `native` selects the native parser
-* 7: Specify the remote URL if the export is meant to be uploaded to a webserver. This fixes the image links. Leave blank for local use.
-
+* 7 : Specify the remote URL if the export is meant to be uploaded to a webserver. This fixes the image links. Leave blank for local use.
+* 8 : Specify the (optionally abbreviated) **from** timestamp: include only notes that are not younger than the given timestamp
+* 9 : Specify the (optionally abbreviated) **to** timestamp: include only notes that are not older than the given timestamp
+* 10: Enter a list of tags in `#tag1 #tag2` format to **only** include notes that are tagged by either of the given tags.
+* 11: Enter a list of tags in `#tag1 #tag2` format to **never** include notes that are tagged by either of the given tags.
 
 # Screenshots of a Semantic Text View
 
