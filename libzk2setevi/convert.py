@@ -15,6 +15,8 @@ from pygments.lexers import guess_lexer
 from pygments.formatters.html import HtmlFormatter
 import pypandoc
 import pymmd
+from datetime import datetime
+
 
 pymmd.load_mmd()
 
@@ -45,7 +47,8 @@ def finish_callback():
 class Zk2Setevi:
     def __init__(self, home, folder=None, out_folder=None, bibfile=None, extension='.md', linkstyle='double',
                  parser=None, max_img_width=320, progress_callback=progress_callback, finish_callback=finish_callback,
-                 base_url=''):
+                 base_url='', timestamp_from = '00000000000000', timestamp_until='22221231235900',
+                 white_tags=None, black_tags=None):
         if folder is None:
             raise RuntimeError('no ZK folder')
         if out_folder is None:
@@ -58,6 +61,11 @@ class Zk2Setevi:
         self.base_url = base_url
         if self.base_url.endswith('/'):
             self.base_url = self.base_url[:-1]
+
+        self.timestamp_from = self.parse_timestamp(timestamp_from)
+        self.timestamp_until = self.parse_timestamp(timestamp_until)
+        self.white_tags = white_tags.replace('\'', '').replace('"', '').split()
+        self.black_tags = black_tags.replace('\'', '').replace('"', '').split()
 
         os.makedirs(self.img_folder, exist_ok=True)
         self.folder = folder
@@ -107,6 +115,18 @@ class Zk2Setevi:
 
         self.vertical_layout = True
 
+    @staticmethod
+    def parse_timestamp(timestamp_str):
+        dt = None
+        input_len = len(timestamp_str)
+        if input_len < 14:
+            timestamp_str += '0' * (14 - input_len)
+        try:
+            dt = datetime.strptime(timestamp_str, '%Y%m%d%H%M%S')
+        except ValueError:
+            pass
+        return dt
+
     def next_id(self):
         self.json_id_counter += 1
         return self.json_id_counter
@@ -123,18 +143,39 @@ class Zk2Setevi:
     def find_all_notes_all_tags(self):
         """
         Manual implementation to get a dict mapping note_ids to tags
-        and tags to note ids. Also record note titles
+        and tags to note ids. Also record note titles.
+        Added Filtering based on date range and tag black / whitelists
         """
         # manual implementation
         for filn in self.get_all_notes():
             note_id = self.get_note_id_of_file(filn)
             if not note_id:
                 continue
+
+            # date range check
+            note_dt = self.parse_timestamp(note_id)
+            if note_dt < self.timestamp_from or note_dt > self.timestamp_until:
+                continue
+
             _, title = filn.split(' ', 1)
             title = title.replace(self.extension, '')
-            self.note_titles[note_id] = title
             tags, citekeys = self.extract_tags_and_citekeys(filn)
 
+            # tag whitelist
+            if self.white_tags:
+                whitelisted = [tag for tag in tags if tag in self.white_tags]
+                if not whitelisted:
+                    continue
+
+            # tag blacklist
+            if self.black_tags:
+                blacklisted = [tag for tag in tags if tag in self.black_tags]
+                if blacklisted:
+                    continue
+
+            # survived all filters!
+            self.note_titles[note_id] = title
+            self.json_note_ids[note_id] = self.next_id()
             if tags:
                 self.note_tags[note_id] = tags
                 for tag in tags:
@@ -142,6 +183,10 @@ class Zk2Setevi:
 
             for citekey in citekeys:
                 self.citing_notes[citekey].add(note_id)
+
+        # now that we know all tags:
+        for tag in sorted(self.tag_notes.keys()):
+            self.json_tag_ids[tag] = self.next_id()
 
     def load_bibfile(self):
         if self.bibfile is None:
@@ -230,15 +275,6 @@ class Zk2Setevi:
                     tags.add(tag[0])
         citekeys = Autobib.find_citations(text, self.bib_citekeys)
         return tags, citekeys
-
-    def enumerate_items(self):
-        """
-        Enumerate note ids and tags (and citekeys).
-        """
-        for noteid in sorted(self.note_titles.keys()):
-            self.json_note_ids[noteid] = self.next_id()
-        for tag in sorted(self.tag_notes.keys()):
-            self.json_tag_ids[tag] = self.next_id()
 
     @staticmethod
     def split_into_paragraphs(text):
@@ -598,7 +634,6 @@ class Zk2Setevi:
     def create_html(self):
         self.load_bibfile()
         self.find_all_notes_all_tags()
-        self.enumerate_items()
 
         json_s = self.create_json()
         with open(os.path.join(self.home, 'data', 'setevi-template.html'), mode='r', encoding='utf-8',

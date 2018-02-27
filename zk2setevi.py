@@ -62,6 +62,36 @@ def get_parser():
                         type=str,
                         default='',
                         help="Remote URL the HTML should be built for")
+
+    parser.add_argument('--from',
+                        dest="timestamp_from",
+                        type=str,
+                        default='19000101',
+                        metavar='FROM',
+                        help="(optionally abbreviated) timestamp from: include only notes that are not younger than FROM")
+
+    parser.add_argument('--to',
+                        dest="timestamp_until",
+                        type=str,
+                        default='22001231',
+                        metavar='TO',
+                        help="(optionally abbreviated) timestamp to: include only notes that are not older than TO")
+
+    parser.add_argument('--only-tags',
+                        dest="tags_white",
+                        type=str,
+                        default='',
+                        metavar='ONLY_TAGLIST',
+                        help="only include notes tagged with tags from ONLY_TAGLIST")
+
+    parser.add_argument('--never-tags',
+                        dest="tags_black",
+                        type=str,
+                        default='',
+                        metavar='NEVER_TAGLIST',
+                        help="never include notes tagged with tags from ONLY_TAGLIST")
+
+
     return parser
 
 
@@ -86,6 +116,8 @@ else:
 
 converter = Zk2Setevi(home=bundle_dir, folder=args.input_folder, out_folder=args.output_folder,
                       bibfile=args.bibfile, extension=args.extension,
-                      linkstyle=args.linkstyle, parser=args.parser, base_url=args.baseurl)
+                      linkstyle=args.linkstyle, parser=args.parser, base_url=args.baseurl,
+                      timestamp_from=args.timestamp_from, timestamp_until=args.timestamp_until,
+                      white_tags=args.tags_white, black_tags=args.tags_black)
 converter.create_html()
 
