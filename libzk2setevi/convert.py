@@ -100,7 +100,7 @@ class Zk2Setevi:
 
         self.bibfile = bibfile
         if bibfile is None:
-            # try to find it in the ZK foldder
+            # try to find it in the ZK folder
             self.bibfile = Autobib.look_for_bibfile(self.folder)
         self.bib_citekeys = []
         self.note_tags = {}

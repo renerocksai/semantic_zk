@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt5.Qt import QUrl, Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QSplitter, QFrame, \
-                            QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox
+                            QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox, QSizePolicy
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from libzk2setevi.convert import Zk2Setevi
 import traceback
@@ -33,7 +33,9 @@ class Semantic_ZK(QWidget):
         zk_lbl_folder = QLabel('ZK Folder')
         zk_hlay = QHBoxLayout()
         zk_ed_folder = QLineEdit('(please select)')
+        zk_ed_folder.setStyleSheet('color:#14148c')
         zk_bt_folder = QPushButton('...')
+        zk_bt_folder.setFixedWidth(100)
         zk_hlay.addWidget(zk_ed_folder)
         zk_hlay.addWidget(zk_bt_folder)
         left_vlay.addWidget(zk_lbl_folder)
@@ -43,7 +45,9 @@ class Semantic_ZK(QWidget):
         out_lbl_folder = QLabel('Output Folder')
         out_hlay = QHBoxLayout()
         out_ed_folder = QLineEdit('(please select)')
+        out_ed_folder.setStyleSheet('color:#14148c')
         out_bt_folder = QPushButton('...')
+        out_bt_folder.setFixedWidth(100)
         out_hlay.addWidget(out_ed_folder)
         out_hlay.addWidget(out_bt_folder)
         left_vlay.addWidget(out_lbl_folder)
@@ -53,7 +57,9 @@ class Semantic_ZK(QWidget):
         bib_lbl = QLabel('Bib File')
         bib_hlay = QHBoxLayout()
         bib_ed = QLineEdit('(auto)')
+        bib_ed.setStyleSheet('color:#14148c')
         bib_bt = QPushButton('...')
+        bib_bt.setFixedWidth(100)
         bib_hlay.addWidget(bib_ed)
         bib_hlay.addWidget(bib_bt)
         left_vlay.addWidget(bib_lbl)
@@ -63,8 +69,8 @@ class Semantic_ZK(QWidget):
         ext_hlay = QHBoxLayout()
         ext_lbl = QLabel('Markdown Extension')
         ext_ed = QLineEdit('.md')
+        ext_ed.setFixedWidth(100)
         ext_hlay.addWidget(ext_lbl)
-        ext_hlay.addStretch(1)
         ext_hlay.addWidget(ext_ed)
         left_vlay.addLayout(ext_hlay)
 
@@ -73,8 +79,10 @@ class Semantic_ZK(QWidget):
         lstyle_lbl = QLabel('Link Style')
         lstyle_choice = QComboBox()
         lstyle_choice.addItems(self.linkstyle_list)
+        lstyle_choice.setFixedWidth(100)
         lstyle_choice.setCurrentIndex(1)
         lstyle_hlay.addWidget(lstyle_lbl)
+        lstyle_hlay.addStretch(1)
         lstyle_hlay.addWidget(lstyle_choice)
         left_vlay.addLayout(lstyle_hlay)
 
@@ -83,8 +91,10 @@ class Semantic_ZK(QWidget):
         parser_lbl = QLabel('Parser')
         parser_choice = QComboBox()
         parser_choice.addItems(self.parser_list)
+        parser_choice.setFixedWidth(100)
         parser_choice.setCurrentIndex(1)
         parser_hlay.addWidget(parser_lbl)
+        parser_hlay.addStretch(1)
         parser_hlay.addWidget(parser_choice)
         left_vlay.addLayout(parser_hlay)
 
@@ -96,12 +106,55 @@ class Semantic_ZK(QWidget):
         # remote URL
         baseurl_lbl = QLabel('Optional remote URL:')
         baseurl_ed = QLineEdit()
+        baseurl_ed.setStyleSheet('color:#14148c')
         left_vlay.addWidget(baseurl_lbl)
         left_vlay.addWidget(baseurl_ed)
 
         # Separator
         sep = self.hline()
         left_vlay.addStretch(1)
+        left_vlay.addWidget(sep)
+
+        # FILTERS:
+        lbl_filter = QLabel('<u>Note filters:</u>')
+        left_vlay.addWidget(lbl_filter)
+        from_hlay = QHBoxLayout()
+        from_lbl = QLabel('from timestamp:')
+        from_ed = QLineEdit('19000101')
+        from_ed.setStyleSheet('color:#14148c')
+
+        from_hlay.addWidget(from_lbl)
+        from_hlay.addStretch(1)
+        from_hlay.addWidget(from_ed)
+        left_vlay.addLayout(from_hlay)
+
+        to_hlay = QHBoxLayout()
+        to_lbl = QLabel('to timestamp:')
+        to_ed = QLineEdit('22001231')
+        to_ed.setStyleSheet('color:#14148c')
+        to_hlay.addWidget(to_lbl)
+        to_hlay.addStretch(1)
+        to_hlay.addWidget(to_ed)
+        left_vlay.addLayout(to_hlay)
+
+        tagwhite_hlay = QHBoxLayout()
+        tagwhite_lbl = QLabel('<pre>Only Tags :</pre>')
+        tagwhite_ed = QLineEdit('')
+        tagwhite_ed.setStyleSheet('color: #328930')
+        tagwhite_hlay.addWidget(tagwhite_lbl)
+        tagwhite_hlay.addWidget(tagwhite_ed)
+        left_vlay.addLayout(tagwhite_hlay)
+
+        tagblack_hlay = QHBoxLayout()
+        tagblack_lbl = QLabel('<pre>Never Tags:</pre>')
+        tagblack_ed = QLineEdit('')
+        tagblack_ed.setStyleSheet('color: #b40000')
+        tagblack_hlay.addWidget(tagblack_lbl)
+        tagblack_hlay.addWidget(tagblack_ed)
+        left_vlay.addLayout(tagblack_hlay)
+
+        # Separator
+        sep = self.hline()
         left_vlay.addWidget(sep)
 
         # Convert Button
@@ -151,12 +204,26 @@ class Semantic_ZK(QWidget):
         self.sel_linkstyle = lstyle_choice
         self.sel_parser = parser_choice
         self.ed_baseurl = baseurl_ed
+        self.ed_from = from_ed
+        self.ed_to = to_ed
+        self.ed_tagblack = tagblack_ed
+        self.ed_tagwhite = tagwhite_ed
 
         # Connections
         convert_bt.clicked.connect(self.on_convert_clicked)
         zk_bt_folder.clicked.connect(self.on_zk_folder_clicked)
         out_bt_folder.clicked.connect(self.on_output_folder_clicked)
         bib_bt.clicked.connect(self.on_bibfile_clicked)
+
+    @staticmethod
+    def check_tags(text):
+        errors = []
+        for tag in text.split():
+            if not tag.startswith('#'):
+                errors.append('<b>{}</b> does not seem to be a tag!'.format(tag))
+            if tag.endswith(','):
+                errors.append('<b>{}</b> ends with a comma!'.format(tag))
+        return errors
 
     def on_convert_clicked(self):
         bibfile = None
@@ -180,12 +247,34 @@ class Semantic_ZK(QWidget):
                 error_lines.append('The markdown extension contains a ' + char)
         else:
             error_lines.append('The markdown extension is empty')
+
+        # now check the filters:
+        ts_from = self.ed_from.text()
+        if Zk2Setevi.parse_timestamp(ts_from) is None:
+            error_lines.append('The FROM timestamp seems incorrect: <b>' + ts_from + '</b>')
+
+        ts_to = self.ed_to.text()
+        if Zk2Setevi.parse_timestamp(ts_to) is None:
+            error_lines.append('The TO timestamp seems incorrect: <b>' + ts_to + '</b>')
+
+        tags_white = self.ed_tagwhite.text()
+        errors = self.check_tags(tags_white)
+        for error in errors:
+            error_lines.append('In ONLY tags: ' + error)
+
+        tags_black = self.ed_tagblack.text()
+        errors = self.check_tags(tags_black)
+        for error in errors:
+            error_lines.append('In TO tags: ' + error)
+
         if error_lines:
             mb = QMessageBox()
             mb.setIcon(QMessageBox.Critical)
             mb.setWindowTitle('Invalid settings')
-            mb.setText('Some of the settings are invalid')
-            mb.setDetailedText('\n'.join(error_lines))
+            mb.setText('Some of the settings are invalid:')
+            error_lines[0] = ' * ' + error_lines[0]
+            mb.setInformativeText('<p>' + '<br> * '.join(error_lines)+ '</p>')
+            mb.setTextFormat(Qt.RichText)
             mb.setStandardButtons(QMessageBox.Ok)
             mb.exec_()
             return
@@ -214,7 +303,8 @@ class Semantic_ZK(QWidget):
                                   bibfile=bibfile, extension=extension,
                                   linkstyle=linkstyle, parser=parser,
                                   progress_callback=self.progress_callback, finish_callback=self.finish_callback,
-                                  base_url=baseurl)
+                                  base_url=baseurl, timestamp_from=ts_from, timestamp_until=ts_to, white_tags=tags_white,
+                                  black_tags=tags_black)
             converter.create_html()
             url = 'file:///' + output_folder + '/index.html'
             qurl = QUrl(url)
