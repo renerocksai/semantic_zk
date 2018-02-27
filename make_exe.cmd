@@ -3,6 +3,7 @@ set PATH=%PATH%;C:\Users\rene.schallner\AppData\Local\Continuum\anaconda3\Script
 
 rd dist /S /Q
 rd build /S /Q
+mkdir _deploy
 
 python bundle_version.py --init
 
