@@ -3,7 +3,7 @@ tags = #graphical #usage #gui
 
 The Graphical tool `semantic_zk` is pretty self-explanatory:
 
-![](img/gui_filters_annotated.png)
+![GUI](img/gui_filters_annotated.png)
 
 The typical workflow is:
 
