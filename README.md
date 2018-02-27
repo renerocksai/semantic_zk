@@ -191,8 +191,11 @@ optional arguments:
 ### Example:
 
 ```bash
-docs_zk docs --only-tags='#setevi #zettelkasten' --never-tags=#start \
-             --from 20180224 --to=20180225 
+zk2setevi docs_zk docs                         \
+          --only-tags='#setevi #zettelkasten'  \
+          --never-tags='#start'                \
+          --from=20180224                      \ 
+          --to=20180225
 ```
 
 * convert the `docs_zk` folder
