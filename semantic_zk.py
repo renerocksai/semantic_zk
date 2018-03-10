@@ -13,7 +13,7 @@ if sys.platform == 'darwin':
     p = Popen('bash -l -c \'echo $PATH\'', stdout=PIPE, shell=True)
     stdout, stderr = p.communicate()
     # make me windows-safe
-    stdout = stdout.decode('utf-8')
+    stdout = stdout.decode('utf-8', errors='ignore')
     os.environ['PATH'] = stdout
 
 

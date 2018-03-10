@@ -184,7 +184,7 @@ class Autobib:
         p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate(bytes(stdin, 'utf-8'))
         # make me windows-safe
-        stdout = stdout.decode('utf-8').replace('\r', '')
-        stderr = stderr.decode('utf-8').replace('\r', '')
+        stdout = stdout.decode('utf-8', errors='ignore').replace('\r', '')
+        stderr = stderr.decode('utf-8', errors='ignore').replace('\r', '')
         # print('pandoc says:', stderr)
         return stdout
