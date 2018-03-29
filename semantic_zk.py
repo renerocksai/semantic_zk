@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt5.Qt import QUrl, Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QSplitter, QFrame, \
-                            QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox, QSizePolicy
+                            QProgressBar, QApplication, QComboBox, QFileDialog, QMessageBox, QStyleFactory
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from libzk2setevi.convert import Zk2Setevi
 import traceback
@@ -352,6 +352,7 @@ class Semantic_ZK(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    QApplication.setStyle(QStyleFactory.create('Fusion'))
     mainwindow = Semantic_ZK()
     mainwindow.setWindowTitle('Semantic ZK')
     mainwindow.show()
