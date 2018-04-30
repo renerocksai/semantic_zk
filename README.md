@@ -1,8 +1,8 @@
 # Semantic_ZK - The Semantic Text View for your Zettelkasten
 
-# MOVED - this work has been merged into [Sublimeless_ZK](https://github.com/renerocksai/sublimeless_zk)
+# MOVED - this work has been merged into [Sublime**less**_ZK](https://github.com/renerocksai/sublimeless_zk)
 
-_[Sublimeless_ZK](https://github.com/renerocksai/sublimeless_zk) is a tool that lets you create a note archive and also export it into a semantic HTML text view._
+_[Sublime**less**_ZK](https://github.com/renerocksai/sublimeless_zk) is a tool that lets you create a note archive and also export it into a semantic HTML text view._
 
 The following will remain here but will not be updated.
 
